@@ -27,51 +27,63 @@ class _HomeState extends State<Home> {
       WasteItem(
           itemName: "Plastic Bottle",
           imageUrl: "assets/images/water_bottle.jpg",
-          description: "plastic water bottle"),
+          description: "Rs.5 for 1l bottle."),
       WasteItem(
           itemName: "Plastic Chair",
           imageUrl: "assets/images/chair.jpg",
-          description: "broken chair"),
+          description: "Negotiable"),
+      WasteItem(
+          itemName: "Plastic Container",
+          imageUrl: "assets/images/container.png",
+          description: "Rs.10 per kg"),
+      WasteItem(
+          itemName: "Plastic Pipes",
+          imageUrl: "assets/images/plastic_pipe.jpg",
+          description: "Rs.20 per meter"),
     ]),
     WasteItemCategory(categoryName: "Paper", items: [
       WasteItem(
           itemName: "Newspaper",
           imageUrl: "assets/images/newspaper.jpg",
-          description: "plastic water bottle"),
-      WasteItem(
+          description: "Re.1 per page."),
+      WasteItem(  
           itemName: "cardboard",
           imageUrl: "assets/images/cardboard.jpg",
-          description: "broken chair"),
+          description: "Rs.10 per piece."),
     ]),
     WasteItemCategory(categoryName: "Metal & Steel", items: [
       WasteItem(
           itemName: "Aluminium",
           imageUrl: "assets/images/alu.png",
-          description: "aluminium untesils"),
+          description: "Negotiable"),
       WasteItem(
-          itemName: "Steel",
-          imageUrl: "assets/images/steel.jpg",
-          description: "rusted steel tool"),
+          itemName: "Steel Furniture",
+          imageUrl: "assets/images/steel_furniture.jpg",
+          description: "Negotiable"),
     ]),
     WasteItemCategory(categoryName: "e-Waste", items: [
       WasteItem(
-          itemName: "Old Computer",
+          itemName: "CDs",
+          imageUrl: "assets/images/CDs.jpg",
+          description: "Rs.10 per kg."),
+      WasteItem(
+          itemName: "CPU & Accessories",
           imageUrl: "assets/images/computer.jpg",
-          description: "plastic water bottle"),
+          description: "Rs.100 per piece"),
       WasteItem(
           itemName: "Battery",
           imageUrl: "assets/images/battery.jpg",
-          description: "broken chair"),
+          description: "Negotiable"),
     ]),
     WasteItemCategory(categoryName: "Glass", items: [
       WasteItem(
           itemName: "Glass Bottle",
           imageUrl: "assets/images/beer.jpg",
-          description: "plastic water bottle"),
+          description: "Rs.30 for 1l bottle"),
       WasteItem(
           itemName: "TubeLights",
           imageUrl: "assets/images/light.jpg",
-          description: "broken chair"),
+          description: "Negotiable"),
     ])
   ];
 
@@ -126,7 +138,8 @@ class _HomeState extends State<Home> {
       //   ),
       // ),
 
-      body: Padding(
+      body: SingleChildScrollView(
+      child: Padding(
           padding: const EdgeInsets.all(30),
           child: SingleChildScrollView(
             child: Column(
@@ -240,7 +253,7 @@ direction: Axis.horizontal,
                     child: Text("Sell Waste",style: TextStyle(color: Colors.white),))
               ],
             ),
-          )),
+          ))),
     );
   }
 }

@@ -75,13 +75,15 @@ flutter:
     - assets/images/chair.jpg
     - assets/images/newspaper.jpg
     - assets/images/alu.png
-    - assets/images/steel.jpg
     - assets/images/battery.jpg
     - assets/images/computer.jpg
     - assets/images/beer.jpg
     - assets/images/light.jpg
     - assets/images/cardboard.jpg
     - assets/images/Recyclo.png
+    - assets/images/container.png
+    - assets/images/plastic_pipe.jpg
+    - assets/images/CDs.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
