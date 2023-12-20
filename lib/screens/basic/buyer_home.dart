@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:wastehub/screens/basic/feedback.dart';
-import 'package:wastehub/screens/basic/sell_request.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: BuyerHome(),
+    );
+  }
+}
 
 class BuyerHome extends StatefulWidget {
   const BuyerHome({Key? key});
@@ -10,13 +24,21 @@ class BuyerHome extends StatefulWidget {
 }
 
 class _HomeState extends State<BuyerHome> {
-  String selectedCategory = "";
+   late GoogleMapController _googleMapController;
+  late Marker _userMarker;
+
+  @override
+  void initState() {
+    super.initState();
+    _userMarker = Marker(markerId: const MarkerId('userLocation'));
+    _requestPermissionAndGetCurrentLocation();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+         automaticallyImplyLeading: false,
         iconTheme: const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
         title: const Text(
           "Recyclo",
@@ -44,56 +66,50 @@ class _HomeState extends State<BuyerHome> {
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => FeedbackPage()),
-              );
-            },
-            label: const Text("Provide Feedback"),
-            backgroundColor: Color.fromARGB(255, 8, 149, 128),
-            foregroundColor: Colors.white,
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 20,
-            ),
-
-            const SizedBox(
-              height: 40,
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, 'history_screen'); // Replace with the actual name of your history screen
-              },
-              child: const Text("History", style: TextStyle(color: Colors.white)),
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SellRequest()));
-                    },
-                    child: Text("Sell Waste",style: TextStyle(color: Colors.white),))
-          ],
-        ),
+      body: 
+      GoogleMap(
+        initialCameraPosition: CameraPosition(target: LatLng(0, 0), zoom: 14),
+        onMapCreated: (controller) {
+          _googleMapController = controller;
+        },
+        markers: {_userMarker},
+        onTap: _handleTap,
       ),
     );
+  }
+
+  Future<void> _requestPermissionAndGetCurrentLocation() async {
+  var status = await Permission.location.request();
+  if (status == PermissionStatus.granted) {
+    _getCurrentLocation();
+  } else {
+    print('Location permission denied');
+  }
+}
+
+
+  Future<void> _getCurrentLocation() async {
+  try {
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    print('Current Location: ${position.latitude}, ${position.longitude}');
+    _updateMarkerPosition(LatLng(position.latitude, position.longitude));
+  } catch (e) {
+    print('Error fetching location: $e');
+  }
+}
+
+
+  void _updateMarkerPosition(LatLng newPosition) {
+    setState(() {
+      _userMarker = _userMarker.copyWith(
+        positionParam: newPosition,
+        infoWindowParam: InfoWindow(title: 'Your Location'),
+      );
+      _googleMapController.animateCamera(CameraUpdate.newLatLng(newPosition));
+    });
+  }
+
+  void _handleTap(LatLng tapPosition) {
+    _updateMarkerPosition(tapPosition);
   }
 }

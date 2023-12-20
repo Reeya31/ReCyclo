@@ -1,5 +1,7 @@
 // seller.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:wastehub/screens/auth_ui/login.dart';
 import 'package:wastehub/screens/auth_ui/signup.dart';
 
 class SellerSignup extends StatefulWidget {
@@ -20,6 +22,35 @@ class _SellerSignupState extends State<SellerSignup> {
   TextEditingController passwordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+
+   register() async {
+    if (passwordController.text != "" &&
+        nameController.text != "" &&
+        emailController.text != "" &&
+        phoneController.text != "") {
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+          "Registered Succesfully!",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        )));
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Login()));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "weak-password") {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Password is too weeak")));
+        } else if (e.code == "email-already-in-use") {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Email is already used")));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +158,7 @@ class _SellerSignupState extends State<SellerSignup> {
                     password = passwordController.text;
                   });
               }
+              register();
             },
             child: const Text(
               "SignUp",

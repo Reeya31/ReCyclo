@@ -1,5 +1,7 @@
 // buyer.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:wastehub/screens/auth_ui/login.dart';
 import 'package:wastehub/screens/auth_ui/signup.dart';
 
 class BuyerSignup extends StatefulWidget {
@@ -11,109 +13,110 @@ class BuyerSignup extends StatefulWidget {
 
 enum WasteType { Plastic, Paper, Metal, Glass, Others }
 
+
+
+List<String> _wasteQuantities = [
+    ' 1 to 5 kg',
+    ' 5 to 10 kg',
+    ' Above 10 kg',
+  ];
+  String _selectedWasteQuantity = _wasteQuantities[0];
+
 class _BuyerSignupState extends State<BuyerSignup> {
   bool isShowPassword = true;
 
-  String fullName = "", email = "", phone = "", password = "", wastetype = "";
-  List<String> selectedWasteTypes = [];
+  String fullName = "", email = "", phone = "", password = "", wastetype = "", wastequantity = "";
+  List<WasteType> selectedWasteTypes = [];
 
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController wastetypeController = TextEditingController();
+  TextEditingController wastequantityController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
-  void _showWasteTypeDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Waste Type'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                CheckboxListTile(
-                  title: const Text("Plastic"),
-                  value: selectedWasteTypes.contains(WasteType.Plastic),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value != null && value) {
-                        selectedWasteTypes.add(WasteType.Plastic as String);
-                      } else {
-                        selectedWasteTypes.remove(WasteType.Plastic);
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text("Paper"),
-                  value: selectedWasteTypes.contains(WasteType.Paper),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value != null && value) {
-                        selectedWasteTypes.add(WasteType.Paper as String);
-                      } else {
-                        selectedWasteTypes.remove(WasteType.Paper);
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text("Metal"),
-                  value: selectedWasteTypes.contains(WasteType.Metal),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value != null && value) {
-                        selectedWasteTypes.add(WasteType.Metal as String);
-                      } else {
-                        selectedWasteTypes.remove(WasteType.Metal);
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text("Glass"),
-                  value: selectedWasteTypes.contains(WasteType.Glass),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value != null && value) {
-                        selectedWasteTypes.add(WasteType.Glass as String);
-                      } else {
-                        selectedWasteTypes.remove(WasteType.Glass);
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text("Others"),
-                  value: selectedWasteTypes.contains(WasteType.Others),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value != null && value) {
-                        selectedWasteTypes.add(WasteType.Others as String);
-                      } else {
-                        selectedWasteTypes.remove(WasteType.Others);
-                      }
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Done'),
-            ),
-          ],
-        );
-      },
-    );
+register1() async {
+    if (passwordController.text != "" &&
+        nameController.text != "" &&
+        emailController.text != "" &&
+        phoneController.text != "" &&
+        wastetypeController.text != "" &&
+        wastequantityController.text != ""
+        ) {
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+          "Registered Succesfully!",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        )));
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Login()));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "weak-password") {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Password is too weeak")));
+        } else if (e.code == "email-already-in-use") {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Email is already used")));
+        }
+      }
+    }
   }
+
+void _showWasteTypeDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Select Waste Type'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              buildCheckbox(WasteType.Plastic),
+              buildCheckbox(WasteType.Paper),
+              buildCheckbox(WasteType.Metal),
+              buildCheckbox(WasteType.Glass),
+              buildCheckbox(WasteType.Others),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Done'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+CheckboxListTile buildCheckbox(WasteType wasteType) {
+  return CheckboxListTile(
+    title: Text(wasteType.toString().split('.').last),
+    value: selectedWasteTypes.contains(wasteType),
+    onChanged: (bool? value) {
+      setState(() {
+        if (value != null && value) {
+          selectedWasteTypes.add(wasteType);
+        } else {
+          selectedWasteTypes.remove(wasteType);
+        }
+      });
+    },
+    tileColor: selectedWasteTypes.contains(wasteType)
+        ? Colors.green.withOpacity(0.2) // Selected color
+        : null,
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +230,50 @@ class _BuyerSignupState extends State<BuyerSignup> {
               ),
             ),
           ),
+            Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      hintText: "Waste Quantity",
+                      prefixIcon: const Icon(
+                        Icons.check_box,
+                        color: Color.fromARGB(255, 8, 149, 128),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10), // Add spacing between text field and dropdown
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Color.fromARGB(255, 8, 149, 128), // Green color
+                    ),
+                    borderRadius: BorderRadius.circular(8.0), // Optional: Add border radius
+                  ),
+                  child: DropdownButton<String>(
+                    value: _selectedWasteQuantity,
+                    items: _wasteQuantities.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedWasteQuantity = value!;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
@@ -236,8 +283,10 @@ class _BuyerSignupState extends State<BuyerSignup> {
                     phone = phoneController.text;
                     password = passwordController.text;
                     wastetype = wastetypeController.text;
+                    wastequantity = wastequantityController.text;
                   });
               }
+              register1();
             },
             child: const Text(
               "SignUp",
