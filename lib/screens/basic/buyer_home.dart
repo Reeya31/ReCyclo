@@ -1,20 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: BuyerHome(),
-    );
-  }
-}
+import 'package:wastehub/screens/basic/feedback.dart';
 
 class BuyerHome extends StatefulWidget {
   const BuyerHome({Key? key});
@@ -24,21 +14,22 @@ class BuyerHome extends StatefulWidget {
 }
 
 class _HomeState extends State<BuyerHome> {
-   late GoogleMapController _googleMapController;
-  late Marker _userMarker;
+    late GoogleMapController googleMapController;
+  late Marker userMarker = Marker(markerId: const MarkerId('currentLocation')); // Declare userMarker variable
+  Set<Marker> markers = {};
 
   @override
   void initState() {
     super.initState();
-    _userMarker = Marker(markerId: const MarkerId('userLocation'));
-    _requestPermissionAndGetCurrentLocation();
+    userMarker = Marker(markerId: const MarkerId('currentLocation'));
+     _getCurrentLocation();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-         automaticallyImplyLeading: false,
+        automaticallyImplyLeading: false,
         iconTheme: const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
         title: const Text(
           "Recyclo",
@@ -66,50 +57,108 @@ class _HomeState extends State<BuyerHome> {
           ),
         ],
       ),
-      body: 
-      GoogleMap(
-        initialCameraPosition: CameraPosition(target: LatLng(0, 0), zoom: 14),
-        onMapCreated: (controller) {
-          _googleMapController = controller;
+
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(target: LatLng(0, 0), zoom: 2),
+        markers: markers,
+        zoomControlsEnabled: false,
+        mapType: MapType.normal,
+        onMapCreated: (GoogleMapController controller) {
+          googleMapController = controller;
         },
-        markers: {_userMarker},
-        onTap: _handleTap,
+        onTap: (LatLng latLng) {
+          _addOrUpdateMarker(latLng);
+        },
       ),
+
+//  floatingActionButton: FloatingActionButton.extended(
+//         onPressed: () async {
+//           // Fetch location on button press
+//           _getCurrentLocation();
+//         },
+//         label: const Text("Current Location"),
+//         icon: const Icon(Icons.location_history),
+//       ),
     );
   }
 
-  Future<void> _requestPermissionAndGetCurrentLocation() async {
-  var status = await Permission.location.request();
-  if (status == PermissionStatus.granted) {
-    _getCurrentLocation();
-  } else {
-    print('Location permission denied');
-  }
-}
-
-
-  Future<void> _getCurrentLocation() async {
+Future<void> _getCurrentLocation() async {
   try {
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    print('Current Location: ${position.latitude}, ${position.longitude}');
-    _updateMarkerPosition(LatLng(position.latitude, position.longitude));
+    Position position = await _determinePosition();
+
+    setState(() {
+      userMarker = Marker(
+        markerId: const MarkerId('currentLocation'),
+        position: LatLng(position.latitude, position.longitude),
+        draggable: true,
+        onDragEnd: (newPosition) {
+          _getPlaceName(newPosition);
+        },
+      );
+      markers.clear();
+      markers.add(userMarker);
+    });
   } catch (e) {
-    print('Error fetching location: $e');
+    print("Error fetching location: $e");
   }
 }
 
 
-  void _updateMarkerPosition(LatLng newPosition) {
+  Future<void> _getPlaceName(LatLng position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        print("Place Name: ${place.name}"); // Display place name in console
+        // You can show place name in UI or handle it as required
+      }
+    } catch (e) {
+      print("Error fetching place name: $e");
+    }
+  }
+
+  void _addOrUpdateMarker(LatLng latLng) {
     setState(() {
-      _userMarker = _userMarker.copyWith(
-        positionParam: newPosition,
-        infoWindowParam: InfoWindow(title: 'Your Location'),
+      markers.remove(userMarker);
+      userMarker = Marker(
+        markerId: const MarkerId('currentLocation'),
+        position: latLng,
+        draggable: true,
+        onDragEnd: (newPosition) {
+          _getPlaceName(newPosition);
+        },
       );
-      _googleMapController.animateCamera(CameraUpdate.newLatLng(newPosition));
+      markers.add(userMarker);
     });
   }
 
-  void _handleTap(LatLng tapPosition) {
-    _updateMarkerPosition(tapPosition);
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      throw 'Location services are disabled';
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        throw 'Location permission denied';
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw 'Location permissions are permanently denied';
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+
+    return position;
   }
+
 }

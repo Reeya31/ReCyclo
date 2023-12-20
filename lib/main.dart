@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
             'login_screen': (context) => Login(),
             'profile_screen': (context) => UserProfile(),
             'home_screen': (context) => Home(),
-            'buyer_home_screen': (context) => BuyerHome(),
+            'buyer_home_screen': (context) => MyApp(),
             'account_screen': (context) => AccountSetting(),
           },
           home:  Signup(),
