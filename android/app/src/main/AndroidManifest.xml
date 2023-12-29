@@ -10,7 +10,7 @@
     <application
         android:label="wastehub"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/icon">
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyDh4LWcQJDJ9KWno-F3wtjjX7JCEc9-hs4"/>
         <activity
