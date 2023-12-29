@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wastehub/constants/routes.dart';
-import 'package:wastehub/screens/basic/home.dart';
+import 'package:wastehub/screens/basic/seller_home.dart';
 // import 'package:get/get.dart';
 
 class UserProfile extends StatelessWidget {

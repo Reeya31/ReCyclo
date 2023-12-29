@@ -14,10 +14,11 @@ class BuyerHome extends StatefulWidget {
 }
 
 class _HomeState extends State<BuyerHome> {
-    late GoogleMapController googleMapController;
+  late GoogleMapController googleMapController;
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation')); // Declare userMarker variable
   Set<Marker> markers = {};
-
+ 
+ late String currentPlaceName;
   @override
   void initState() {
     super.initState();
@@ -59,7 +60,7 @@ class _HomeState extends State<BuyerHome> {
       ),
 
       body: GoogleMap(
-        initialCameraPosition: CameraPosition(target: LatLng(0, 0), zoom: 2),
+        initialCameraPosition: CameraPosition(target: LatLng(27.672468, 85.337924), zoom: 14),
         markers: markers,
         zoomControlsEnabled: false,
         mapType: MapType.normal,
@@ -105,17 +106,21 @@ Future<void> _getCurrentLocation() async {
 
 
   Future<void> _getPlaceName(LatLng position) async {
-    try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        print("Place Name: ${place.name}"); // Display place name in console
-        // You can show place name in UI or handle it as required
-      }
-    } catch (e) {
-      print("Error fetching place name: $e");
+  try {
+    List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks.first;
+      String name = place.name ?? "Unknown Place";
+      print("Place Name: $name");
+
+      setState(() {
+        currentPlaceName = name;
+      });
     }
+  } catch (e) {
+    print("Error fetching place name: $e");
   }
+}
 
   void _addOrUpdateMarker(LatLng latLng) {
     setState(() {

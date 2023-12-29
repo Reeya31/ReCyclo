@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:wastehub/screens/basic/home.dart';
+import 'package:wastehub/screens/basic/seller_home.dart';
 import 'package:wastehub/screens/basic/welcome.dart';
 
 import 'exceptions/login_failure.dart';

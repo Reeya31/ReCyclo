@@ -11,7 +11,7 @@ import 'package:wastehub/screens/auth_ui/account_setting.dart';
 import 'package:wastehub/screens/auth_ui/login.dart';
 import 'package:wastehub/screens/auth_ui/signup.dart';
 import 'package:wastehub/screens/auth_ui/user_profile.dart';
-import 'package:wastehub/screens/basic/home.dart';
+import 'package:wastehub/screens/basic/seller_home.dart';
 import 'package:wastehub/screens/basic/buyer_home.dart';
 import 'package:wastehub/screens/basic/welcome.dart';
 import 'package:wastehub/services/auth.dart';
