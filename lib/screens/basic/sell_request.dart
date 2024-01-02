@@ -63,6 +63,19 @@ class _SellRequestState extends State<SellRequest> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    margin: EdgeInsets.only(top: 8),
+                    height: 5,
+                    width: 100,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.grey),
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
                 TextField(
                   controller: addressController,
                   readOnly: true,
@@ -133,7 +146,7 @@ class _SellRequestState extends State<SellRequest> {
                     // Access selected waste quantity: _selectedWasteQuantity
                   },
                   child: Text(
-                    'Send Pickup Request',
+                    'Send Request',
                     style: TextStyle(fontSize: 15, color: Colors.white),
                   ),
                 ),
