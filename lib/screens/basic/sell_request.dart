@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_google_maps_webservices/places.dart';
 
 class SellRequest extends StatefulWidget {
   const SellRequest({Key? key}) : super(key: key);
@@ -162,8 +163,9 @@ class _SellRequestState extends State<SellRequest> {
             onMapCreated: (GoogleMapController controller) {
               googleMapController = controller;
             },
-            onTap: (LatLng latLng) {
-              addOrUpdateMarker(latLng);
+           onTap: (LatLng latLng) {
+            addOrUpdateMarker(latLng);
+            getPlaceName(latLng);
             },
           ),
         ),
@@ -193,18 +195,31 @@ class _SellRequestState extends State<SellRequest> {
   }
 
   Future<void> getPlaceName(LatLng position) async {
-    try {
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(position.latitude, position.longitude);
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        print("Place Name: ${place.name}");
-        // You can show place name in UI or handle it as required
-      }
-    } catch (e) {
-      print("Error fetching place name: $e");
+  try {
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude, position.longitude,
+        localeIdentifier: 'en_US');
+
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks.first;
+
+      String thoroughfare = place.thoroughfare ?? '';
+      String locality = place.locality ?? '';
+
+      String placeName = '${thoroughfare.isNotEmpty ? thoroughfare + ', ' : ''}$locality';
+
+      print("Place Name: $placeName");
+      // You can show place name in UI or handle it as required
+      setState(() {
+        addressController.text = placeName;
+      });
     }
+  } catch (e) {
+    print("Error fetching place name: $e");
   }
+}
+
+
 
   void addOrUpdateMarker(LatLng latLng) {
     setState(() {
