@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:wastehub/screens/auth_ui/login.dart';
 import 'package:wastehub/screens/auth_ui/user_profile.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wastehub/screens/basic/feedback.dart';
+import 'package:wastehub/screens/auth_ui/about_us.dart';
 // import 'package:get/get.dart';
 
 class AccountSetting extends StatefulWidget {
@@ -231,7 +233,16 @@ class _AccountSettingState extends State<AccountSetting> {
                         const SizedBox(
                           height: 45,
                         ),
-                        const Row(children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AboutUsScreen(),
+                              ),
+                            );
+                          },
+                        child : const Row(children: [
                           Icon(
                             Icons.info,
                             color: Color.fromARGB(255, 40, 125, 112),
@@ -246,10 +257,12 @@ class _AccountSettingState extends State<AccountSetting> {
                                 fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ]),
+                        ),
                         const SizedBox(
                           height: 45,
                         ),
-                        const Row(children: [
+                        
+                      const Row(children: [
                           Icon(
                             Icons.phone,
                             color: Color.fromARGB(255, 40, 125, 112),
@@ -262,8 +275,40 @@ class _AccountSettingState extends State<AccountSetting> {
                             "Contact",
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
+                          ),                         
                         ]),
+                        
+                        const SizedBox(
+                          height: 45,
+                        ),
+
+                        InkWell(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FeedbackPage(userType: _userData?['userType']?? ''),
+      ),
+    );
+  },
+  child: Row(
+    children: [
+      Icon(
+        Icons.feedback,
+        color: Color.fromARGB(255, 40, 125, 112),
+        size: 30,
+      ),
+      SizedBox(
+        width: 12,
+      ),
+      Text(
+        "Feedback",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+    ],
+  ),
+),
+
                         const SizedBox(
                           height: 45,
                         ),
@@ -297,3 +342,9 @@ class _AccountSettingState extends State<AccountSetting> {
     );
   }
 }
+
+
+
+
+
+

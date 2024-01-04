@@ -81,12 +81,13 @@ Future<void> getCurrentLocationOfUser() async {
         ],
       ),
 
-body: SafeArea(
+body: 
+SafeArea(
         child: SlidingUpPanel(
-          minHeight: 40,
+          minHeight: 110,
           maxHeight: MediaQuery.of(context).size.height - 740,
           panel: Container(
-            padding: EdgeInsets.all(16),
+            // padding: EdgeInsets.all(10),
             color: Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

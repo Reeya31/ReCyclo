@@ -118,16 +118,16 @@ class _HomeState extends State<Home> {
           })
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => FeedbackPage()));
-        },
-        label: Text("Provide Feedback"),
-        backgroundColor: Color.fromARGB(255, 8, 149, 128),
-        foregroundColor: Colors.white,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () {
+      //     Navigator.push(
+      //         context, MaterialPageRoute(builder: (context) => FeedbackPage(userType: 'Seller',)));
+      //   },
+      //   label: Text("Provide Feedback"),
+      //   backgroundColor: Color.fromARGB(255, 8, 149, 128),
+      //   foregroundColor: Colors.white,
+      // ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       // body: Padding(
       //   padding: const EdgeInsets.all(15),
