@@ -22,11 +22,19 @@ class _SellRequestState extends State<SellRequest> {
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
 
+   bool isLoading = false;
+
   @override
   void initState() {
     super.initState();
     userMarker = Marker(markerId: const MarkerId('currentLocation'));
+    getCurrentLocationOfUserAndFetchName();
     getCurrentLocation();
+  }
+
+  Future<void> getCurrentLocationOfUserAndFetchName() async {
+    await getCurrentLocationOfUser(); // Get the current location
+    getPlaceName(LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude));
   }
 
   // String _selectedWasteType = 'Plastic';
@@ -141,16 +149,52 @@ class _SellRequestState extends State<SellRequest> {
                 ),
                 SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle send pickup request here
-                    // Access selected waste type: _selectedWasteType
-                    // Access selected waste quantity: _selectedWasteQuantity
-                  },
-                  child: Text(
-                    'Send Request',
-                    style: TextStyle(fontSize: 15, color: Colors.white),
-                  ),
-                ),
+  onPressed: () {
+    // Check if waste type is selected
+    if (selectedWaste.contains(true)) {
+      // Show finding message at the top of the page
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Container(
+            height: 50,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Finding a buyer for you'),
+                SizedBox(width: 10),
+                CircularProgressIndicator(),
+              ],
+            ),
+          ),
+          duration: Duration(seconds: 8),
+        ),
+      );
+
+      // Simulate loading for 5 seconds
+      Future.delayed(Duration(seconds: 8), () {
+        // Hide the previous snackbar
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
+        // Show message "Sorry, currently no drivers are available" at the bottom of the page
+        final snackBarError = SnackBar(
+          content: Text('Sorry, currently no buyers are available'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+      });
+    } else {
+      // Show message "Please select a waste type" at the bottom of the page
+      final snackBarError = SnackBar(
+        content: Text('Please select a waste type'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+    }
+  },
+  child: Text(
+    'Send Request',
+    style: TextStyle(fontSize: 15, color: Colors.white),
+  ),
+),
               ],
             ),
           ),

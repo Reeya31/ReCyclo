@@ -117,7 +117,9 @@ class _LoginState extends State<Login> {
                         child: Image.asset(
                           "assets/images/Recyclo.png",
                           fit: BoxFit.contain,
-                        )),
+                          width: 300, // Set the desired width
+                          height: 280, // Set the desired height
+                          )),
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: TextFormField(

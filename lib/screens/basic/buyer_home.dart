@@ -19,18 +19,25 @@ class BuyerHome extends StatefulWidget {
 
 class _HomeState extends State<BuyerHome> {
 geo.Position? currentPositionOfUser;
-final TextEditingController addressController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
 
   late GoogleMapController googleMapController;
-  late Marker userMarker = Marker(markerId: const MarkerId('currentLocation')); // Declare userMarker variable
+  late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
  
   @override
   void initState() {
     super.initState();
     userMarker = Marker(markerId: const MarkerId('currentLocation'));
+    getCurrentLocationOfUserAndFetchName();
     getCurrentLocation();
+    //getPlaceName(latLng); // Initial location
   }
+ Future<void> getCurrentLocationOfUserAndFetchName() async {
+    await getCurrentLocationOfUser(); // Get the current location
+    getPlaceName(LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude));
+  }
+
 
 Future<void> getCurrentLocationOfUser() async {
     geo.Position positionOfUser = await geo.Geolocator.getCurrentPosition(
