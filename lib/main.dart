@@ -7,6 +7,7 @@ import 'package:wastehub/screens/auth_ui/account_setting.dart';
 import 'package:wastehub/screens/auth_ui/login.dart';
 import 'package:wastehub/screens/auth_ui/signup.dart';
 import 'package:wastehub/screens/auth_ui/user_profile.dart';
+import 'package:wastehub/screens/auth_ui/settings.dart';
 import 'package:wastehub/screens/basic/seller_home.dart';
 import 'package:wastehub/screens/basic/welcome.dart';
 import 'package:wastehub/services/auth.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: "recyclo",
           theme: themeData,
+         // or ThemeMode.light/dark based on user preference
           // initialRoute: 'login_screen',
           routes: {
             'welcome_screen': (context) => Welcome(),

@@ -41,7 +41,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Feedback'),
+        title: Text('Feedback',style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),),
+      elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: Color.fromARGB(255, 8, 149, 128),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -70,7 +76,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 // Save feedback to the 'feedback' collection
                 saveFeedback(feedback);
               },
-              child: Text('Submit Feedback'),
+              child: Text('Submit',style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),),
             ),
           ],
         ),
