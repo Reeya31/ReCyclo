@@ -26,9 +26,11 @@ class _SignupState extends State<Signup> {
   List<bool> selectedWaste = [false, false, false, false];
 
 // waste quantity
-  List<String> wasteQty = ["1 to 5 kg", "5 to 10 kg ", "10Kg above"];
+  List<String> wasteQty = ['Below 1kg',
+                            '1 to 5 kg',
+                            'Above 5 kg',];
   List<bool> selectedQty = [false, false, false];
-  String initialSelectedQty = "1 to 5 kg";
+  String initialSelectedQty = "Below 1kg";
 
 // User Authentication
   String fullName = "", email = "", phone = "", password = "";
@@ -87,10 +89,10 @@ class _SignupState extends State<Signup> {
             .createUserWithEmailAndPassword(email: email, password: password);
 
         await FirebaseFirestore.instance
-            .collection('users')
+            .collection('sellers')
             .doc(userCredential.user?.uid)
             .set({
-          'fullName': fullName,
+          'fullname': fullName,
           'email': email,
           'phone': phone,
           'password': password,
@@ -175,16 +177,16 @@ class _SignupState extends State<Signup> {
         // });
 
         await FirebaseFirestore.instance
-            .collection('users')
+            .collection('buyers')
             .doc(userCredential.user?.uid)
             .set({
-          'fullName': fullName,
+          'fullname': fullName,
           'email': email,
           'phone': phone,
           'password': password,
           'userType': selectedUserType == UserType.Buyer ? 'Buyer' : 'Seller',
-          'selectedWaste': selectedWaste,
-          'initialSelectedQty': initialSelectedQty,
+          'WasteType': selectedWaste,
+          'WasteQuantity': initialSelectedQty,
           // Add other fields as needed
         });
         // if (selectedUserType == UserType.Buyer) {

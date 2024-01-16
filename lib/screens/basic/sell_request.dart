@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -6,6 +8,63 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
+
+class FindingBuyerAnimation extends StatefulWidget {
+  @override
+  _FindingBuyerAnimationState createState() => _FindingBuyerAnimationState();
+}
+
+class _FindingBuyerAnimationState extends State<FindingBuyerAnimation>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _animation.value * 2 * 3.14,
+              // origin: Offset(50.0, 50.0),
+              child: Center(
+                child: Icon(
+                  Icons.circle_outlined,
+                  size: 40,
+                  color: Colors.blue,
+                ),
+              ),
+            );
+          },
+        ),
+        Text("Searching for Buyers")
+      ],
+    );
+  }
+}
+
 
 class SellRequest extends StatefulWidget {
   const SellRequest({Key? key}) : super(key: key);
@@ -21,8 +80,12 @@ class _SellRequestState extends State<SellRequest> {
   late GoogleMapController googleMapController;
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
+  PanelController _pc = new PanelController();
 
-   bool isLoading = false;
+  bool isLoading = false;
+
+  List<String> wasteType = ["Plastic", "Paper", "Glass", "e-Waste"];
+  List<bool> selectedWaste = [false, false, false, false];
 
   @override
   void initState() {
@@ -30,6 +93,7 @@ class _SellRequestState extends State<SellRequest> {
     userMarker = Marker(markerId: const MarkerId('currentLocation'));
     getCurrentLocationOfUserAndFetchName();
     getCurrentLocation();
+    _pc = PanelController();
   }
 
   Future<void> getCurrentLocationOfUserAndFetchName() async {
@@ -39,9 +103,6 @@ class _SellRequestState extends State<SellRequest> {
 
   // String _selectedWasteType = 'Plastic';
   String _selectedWasteQuantity = 'Below 1kg';
-
-  List<String> wasteType = ["Plastic", "Paper", "Glass", "e-Waste"];
-  List<bool> selectedWaste = [false, false, false, false];
 
   List<String> _wasteQuantities = [
     'Below 1kg',
@@ -56,6 +117,172 @@ class _SellRequestState extends State<SellRequest> {
     currentPositionOfUser = positionOfUser;
 
     LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
+  }
+
+  bool findingBuyer = false;
+
+  // Function to fetch buyer information based on the KNN algorithm
+  Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQuantity,
+      LatLng sellerLocation) async {
+    try {
+      // Fetch all buyer data from Firestore
+      QuerySnapshot buyersSnapshot =
+          await FirebaseFirestore.instance.collection('buyers').get();
+
+      // Initialize variables to store the most relevant buyer data
+      String? selectedBuyerFullName;
+      String? selectedBuyerPhone;
+      double? minDistance;
+
+      // Iterate through each buyer
+      for (QueryDocumentSnapshot buyerSnapshot in buyersSnapshot.docs) {
+        // Get buyer data
+        Map<String, dynamic> buyerData = buyerSnapshot.data() as Map<String, dynamic>;
+
+        // Extract relevant buyer information
+        String buyerFullName = buyerData['fullname'];
+        String buyerPhone = buyerData['phone'];
+        List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
+        String buyerWasteQuantity = buyerData['WasteQuantity'];
+        GeoPoint buyerLocation = buyerData['location'];
+        double buyerLat = buyerLocation.latitude;
+        double buyerLon = buyerLocation.longitude;
+
+        // Convert buyer waste types to WasteType objects
+        List<String> buyerWasteTypeObjects = buyerWasteTypes
+            .asMap()
+            .entries
+            .where((entry) => entry.value)
+            .map((entry) => wasteType[entry.key])
+            .toList();
+
+        // Compare waste types
+        if (sellerWasteTypes.asMap().entries.any((entry) =>
+    entry.value && buyerWasteTypeObjects.contains(wasteType[entry.key]))) {
+          // Compare waste quantity
+          if (sellerWasteQuantity == buyerWasteQuantity) {
+            // Calculate distance using Haversine formula
+            double distance = calculateDistance(
+                sellerLocation.latitude, sellerLocation.longitude, buyerLat, buyerLon);
+
+            // Update the most relevant buyer if it's the first match or closer than previous matches
+            if (minDistance == null || distance < minDistance) {
+              minDistance = distance;
+              selectedBuyerFullName = buyerFullName;
+              selectedBuyerPhone = buyerPhone;
+            }
+          }
+        }
+
+        // Debugging output for each buyer
+        print('Buyer Full Name: $buyerFullName');
+        print('Buyer Phone: $buyerPhone');
+        print('Buyer Waste Types: $buyerWasteTypeObjects');
+        print('Buyer Waste Quantity: $buyerWasteQuantity');
+        print('Distance to Buyer: $minDistance');
+        print('-----------------------------------');
+      }
+
+      // Display relevant buyer information to the seller
+      if (selectedBuyerFullName != null) {
+        // Display message to the seller
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$selectedBuyerFullName has been appointed to you.'),
+          ),
+        );
+
+        // Update the UI or perform any other actions as needed
+
+        print('Selected Buyer Full Name: $selectedBuyerFullName');
+        print('Selected Buyer Phone: $selectedBuyerPhone');
+      } else {
+        // No relevant buyer found
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No buyers are available.'),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error finding relevant buyer: $e');
+      // Handle the error (show an error message, etc.)
+    }
+  }
+
+  // Method for calculating distance (Haversine formula)
+  double calculateDistance(double startLat, double startLon, double endLat, double endLon) {
+    const double earthRadius = 6371.0; // Earth radius in kilometers
+
+    // Convert degrees to radians
+    double toRadians(double degree) {
+      return degree * (pi / 180.0);
+    }
+
+    // Haversine formula
+    num haversine(double theta) {
+      return pow(sin(theta / 2), 2);
+    }
+
+    double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+      double dLat = toRadians(lat2 - lat1);
+      double dLon = toRadians(lon2 - lon1);
+
+      double a = haversine(dLat) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * haversine(dLon);
+      double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+      return earthRadius * c;
+    }
+
+    return haversineDistance(startLat, startLon, endLat, endLon);
+  }
+
+  Future<void> sendPickupRequest() async {
+    try {
+      // Get the selected waste type and quantity
+      List<String> selectedWasteTypes = wasteType
+          .asMap()
+          .entries
+          .where((entry) => selectedWaste[entry.key])
+          .map((entry) => entry.value)
+          .toList();
+
+
+      String wasteQuantity = _selectedWasteQuantity;
+
+      // Get the current location details
+      String placeName = addressController.text;
+      LatLng currentLocation = userMarker.position;
+
+        if (selectedWasteTypes.isNotEmpty) {
+        // Construct the pickup request data with an array of boolean values for waste types
+        Map<String, dynamic> pickupRequestData = {
+          'WasteType': selectedWaste,
+          'WasteQuantity': wasteQuantity,
+          'PlaceName': placeName,
+          'location': GeoPoint(currentLocation.latitude, currentLocation.longitude),
+        };
+
+        // Send the pickup request to Firestore
+        await FirebaseFirestore.instance.collection('pickupRequests').add(pickupRequestData);
+
+        // Show a success message or navigate to a confirmation screen
+        print('Pickup request sent successfully!');
+
+        // Find the most relevant buyer
+        await findRelevantBuyer(
+            selectedWaste, _selectedWasteQuantity, currentLocation);
+      } else {
+        // Show message "Please select a waste type" at the bottom of the page
+        final snackBarError = SnackBar(
+          content: Text('Please select a waste type'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+      }
+    } catch (e) {
+      print('Error sending pickup request: $e');
+      // Handle the error (show an error message, etc.)
+    }
   }
 
   @override
@@ -105,7 +332,7 @@ class _SellRequestState extends State<SellRequest> {
                     SizedBox(
                       width: 12,
                     ),
-                     ListView.builder(
+                    ListView.builder(
               shrinkWrap: true,
               itemCount: wasteType.length,
               itemBuilder: (context, index) {
@@ -149,52 +376,23 @@ class _SellRequestState extends State<SellRequest> {
                 ),
                 SizedBox(height: 10),
                 ElevatedButton(
-  onPressed: () {
-    // Check if waste type is selected
-    if (selectedWaste.contains(true)) {
-      // Show finding message at the top of the page
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Container(
-            height: 50,
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Finding a buyer for you'),
-                SizedBox(width: 10),
-                CircularProgressIndicator(),
-              ],
-            ),
-          ),
-          duration: Duration(seconds: 8),
-        ),
-      );
-
-      // Simulate loading for 5 seconds
-      Future.delayed(Duration(seconds: 8), () {
-        // Hide the previous snackbar
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-
-        // Show message "Sorry, currently no drivers are available" at the bottom of the page
-        final snackBarError = SnackBar(
-          content: Text('Sorry, currently no buyers are available'),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
-      });
-    } else {
-      // Show message "Please select a waste type" at the bottom of the page
-      final snackBarError = SnackBar(
-        content: Text('Please select a waste type'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBarError);
-    }
-  },
-  child: Text(
-    'Send Request',
-    style: TextStyle(fontSize: 15, color: Colors.white),
-  ),
-),
+                  onPressed: () {
+                    // Check if at least one waste type is selected
+                     if (selectedWaste.any((waste) => waste)) {
+                      sendPickupRequest();
+                    } else {
+                      // Show message "Please select a waste type" at the bottom of the page
+                      final snackBarError = SnackBar(
+                        content: Text('Please select at least one waste type'),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+                    }
+                  },
+                  child: Text(
+                    'Send Request',
+                    style: TextStyle(fontSize: 15, color: Colors.white),
+                  ),
+                ),
               ],
             ),
           ),
@@ -207,9 +405,9 @@ class _SellRequestState extends State<SellRequest> {
             onMapCreated: (GoogleMapController controller) {
               googleMapController = controller;
             },
-           onTap: (LatLng latLng) {
-            addOrUpdateMarker(latLng);
-            getPlaceName(latLng);
+            onTap: (LatLng latLng) {
+              addOrUpdateMarker(latLng);
+              getPlaceName(latLng);
             },
           ),
         ),

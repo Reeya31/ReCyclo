@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -8,6 +9,8 @@ import 'package:wastehub/screens/basic/feedback.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
 import 'package:location/location.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class BuyerHome extends StatefulWidget {
@@ -25,14 +28,26 @@ geo.Position? currentPositionOfUser;
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
  
-  @override
+ late User? _user;
+  late FirebaseFirestore firestore;
+
+ @override
   void initState() {
     super.initState();
-    userMarker = Marker(markerId: const MarkerId('currentLocation'));
-    getCurrentLocationOfUserAndFetchName();
-    getCurrentLocation();
-    //getPlaceName(latLng); // Initial location
+
+     FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      setState(() {
+        _user = user;
+      });
+    });
+    // Initialize Firebase
+    Firebase.initializeApp().then((value) {
+      firestore = FirebaseFirestore.instance;
+      getCurrentLocationOfUserAndFetchName();
+      getCurrentLocation();
+    });
   }
+
  Future<void> getCurrentLocationOfUserAndFetchName() async {
     await getCurrentLocationOfUser(); // Get the current location
     getPlaceName(LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude));
@@ -47,6 +62,21 @@ Future<void> getCurrentLocationOfUser() async {
 
     LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
   }
+
+Future<void> storeLocationInDatabase(LatLng latLng) async {
+  try {
+    if (_user != null) {
+      await firestore.collection('buyers').doc(_user!.uid).set({
+        // 'latitude': latLng.latitude,
+        // 'longitude': latLng.longitude,
+        'location': GeoPoint(latLng.latitude, latLng.longitude),
+      },SetOptions(merge: true));
+    }
+  } catch (e) {
+    print("Error storing location in database: $e");
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +114,7 @@ Future<void> getCurrentLocationOfUser() async {
 body: 
 SafeArea(
         child: SlidingUpPanel(
-          minHeight: 110,
+          minHeight: 50,
           maxHeight: MediaQuery.of(context).size.height - 740,
           panel: Container(
             // padding: EdgeInsets.all(10),
@@ -94,10 +124,12 @@ SafeArea(
               children: [
                 Center(
                   child: Container(
+                    padding: EdgeInsets.all(10),
                     margin: EdgeInsets.only(top: 8),
                     height: 5,
                     width: 100,
                     decoration: BoxDecoration(
+                        
                         borderRadius: BorderRadius.circular(10),
                         color: Colors.grey),
                   ),
@@ -131,34 +163,12 @@ SafeArea(
            onTap: (LatLng latLng) {
             addOrUpdateMarker(latLng);
             getPlaceName(latLng);
-            },
+            storeLocationInDatabase(latLng); // Store location when tapped
+          },
           ),
         ),
       ),
 
-
-      // body: GoogleMap(
-      //   initialCameraPosition: CameraPosition(target: LatLng(27.672468, 85.337924), zoom: 14),
-      //   markers: markers,
-      //   zoomControlsEnabled: false,
-      //   mapType: MapType.normal,
-      //   onMapCreated: (GoogleMapController controller) {
-      //     googleMapController = controller;
-      //   },
-      //   onTap: (LatLng latLng) {
-      //     _addOrUpdateMarker(latLng);
-      //   },        
-      // ),
-
-                
-//  floatingActionButton: FloatingActionButton.extended(
-//         onPressed: () async {
-//           // Fetch location on button press
-//           _getCurrentLocation();
-//         },
-//         label: const Text("Current Location"),
-//         icon: const Icon(Icons.location_history),
-//       ),
     );
   }
 
