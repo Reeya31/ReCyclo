@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:ReCyclo/screens/basic/feedback.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
 import 'package:location/location.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class BuyerHome extends StatefulWidget {
   const BuyerHome({Key? key});
@@ -21,25 +19,26 @@ class BuyerHome extends StatefulWidget {
 }
 
 class _HomeState extends State<BuyerHome> {
-geo.Position? currentPositionOfUser;
+  geo.Position? currentPositionOfUser;
   final TextEditingController addressController = TextEditingController();
 
   late GoogleMapController googleMapController;
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
- 
- late User? _user;
+
+  late User? _user;
   late FirebaseFirestore firestore;
 
- @override
+  @override
   void initState() {
     super.initState();
 
-     FirebaseAuth.instance.authStateChanges().listen((User? user) {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
       setState(() {
         _user = user;
       });
     });
+
     // Initialize Firebase
     Firebase.initializeApp().then((value) {
       firestore = FirebaseFirestore.instance;
@@ -48,35 +47,33 @@ geo.Position? currentPositionOfUser;
     });
   }
 
- Future<void> getCurrentLocationOfUserAndFetchName() async {
+  Future<void> getCurrentLocationOfUserAndFetchName() async {
     await getCurrentLocationOfUser(); // Get the current location
-    getPlaceName(LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude));
+    getPlaceName(LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude), storeLocation: false);
   }
 
-
-Future<void> getCurrentLocationOfUser() async {
+  Future<void> getCurrentLocationOfUser() async {
     geo.Position positionOfUser = await geo.Geolocator.getCurrentPosition(
-        desiredAccuracy: geo.LocationAccuracy.best);
+      desiredAccuracy: geo.LocationAccuracy.best,
+    );
 
     currentPositionOfUser = positionOfUser;
 
     LatLng(currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
   }
 
-Future<void> storeLocationInDatabase(LatLng latLng) async {
-  try {
-    if (_user != null) {
-      await firestore.collection('buyers').doc(_user!.uid).set({
-        // 'latitude': latLng.latitude,
-        // 'longitude': latLng.longitude,
-        'location': GeoPoint(latLng.latitude, latLng.longitude),
-      },SetOptions(merge: true));
+  Future<void> storeLocationInDatabase(LatLng latLng, String placeName) async {
+    try {
+      if (_user != null) {
+        await firestore.collection('buyers').doc(_user!.uid).set({
+          'location': GeoPoint(latLng.latitude, latLng.longitude),
+          'placeName': placeName,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      print("Error storing location in database: $e");
     }
-  } catch (e) {
-    print("Error storing location in database: $e");
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -110,14 +107,11 @@ Future<void> storeLocationInDatabase(LatLng latLng) async {
           ),
         ],
       ),
-
-body: 
-SafeArea(
+      body: SafeArea(
         child: SlidingUpPanel(
           minHeight: 50,
           maxHeight: MediaQuery.of(context).size.height - 740,
           panel: Container(
-            // padding: EdgeInsets.all(10),
             color: Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,9 +123,9 @@ SafeArea(
                     height: 5,
                     width: 100,
                     decoration: BoxDecoration(
-                        
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -153,28 +147,27 @@ SafeArea(
           ),
           body: GoogleMap(
             initialCameraPosition: const CameraPosition(
-                target: LatLng(27.672468, 85.337924), zoom: 14),
+              target: LatLng(27.672468, 85.337924),
+              zoom: 14,
+            ),
             markers: markers,
             zoomControlsEnabled: false,
             mapType: MapType.normal,
             onMapCreated: (GoogleMapController controller) {
               googleMapController = controller;
             },
-           onTap: (LatLng latLng) {
-            addOrUpdateMarker(latLng);
-            getPlaceName(latLng);
-            storeLocationInDatabase(latLng); // Store location when tapped
-          },
+            onTap: (LatLng latLng) {
+              addOrUpdateMarker(latLng);
+              getPlaceName(latLng, storeLocation: true); // Store location when tapped
+            },
           ),
         ),
       ),
-
     );
   }
 
-
-   Future<void> getCurrentLocation() async {
-    try {
+  Future<void>getCurrentLocation()async{
+  try {
       geo.Position position = await determinePosition();
 
       setState(() {
@@ -183,7 +176,7 @@ SafeArea(
           position: LatLng(position.latitude, position.longitude),
           draggable: true,
           onDragEnd: (newPosition) {
-            getPlaceName(newPosition);
+            getPlaceName(newPosition, storeLocation: true);
           },
         );
         markers.clear();
@@ -194,30 +187,36 @@ SafeArea(
     }
   }
 
-  Future<void> getPlaceName(LatLng position) async {
-  try {
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude, position.longitude,
-        localeIdentifier: 'en_US');
+  Future<void> getPlaceName(LatLng position, {bool storeLocation = false}) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+        localeIdentifier: 'en_US',
+      );
 
-    if (placemarks.isNotEmpty) {
-      Placemark place = placemarks.first;
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
 
-      String thoroughfare = place.thoroughfare ?? '';
-      String locality = place.locality ?? '';
+        String thoroughfare = place.thoroughfare ?? '';
+        String locality = place.locality ?? '';
 
-      String placeName = '${thoroughfare.isNotEmpty ? thoroughfare + ', ' : ''}$locality';
+        String placeName = '${thoroughfare.isNotEmpty ? thoroughfare + ', ' : ''}$locality';
 
-      print("Place Name: $placeName");
-      // You can show place name in UI or handle it as required
-      setState(() {
-        addressController.text = placeName;
-      });
+        print("Place Name: $placeName");
+
+        if (storeLocation) {
+          storeLocationInDatabase(position, placeName);
+        }
+
+        setState(() {
+          addressController.text = placeName;
+        });
+      }
+    } catch (e) {
+      print("Error fetching place name: $e");
     }
-  } catch (e) {
-    print("Error fetching place name: $e");
   }
-}
 
   void addOrUpdateMarker(LatLng latLng) {
     setState(() {
@@ -227,7 +226,7 @@ SafeArea(
         position: latLng,
         draggable: true,
         onDragEnd: (newPosition) {
-          getPlaceName(newPosition);
+          getPlaceName(newPosition, storeLocation: true);
         },
       );
       markers.add(userMarker);
@@ -262,5 +261,4 @@ SafeArea(
 
     return position;
   }
-
 }

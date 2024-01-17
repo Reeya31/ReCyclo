@@ -8,6 +8,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class FindingBuyerAnimation extends StatefulWidget {
   @override
@@ -155,7 +157,7 @@ Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQu
 
   String buyerFullName = buyerData['fullname'] ?? '';
   String buyerPhone = buyerData['phone'] ?? '';
-  String buyerPlaceName = buyerData['PlaceName'] ?? '';
+  String buyerPlaceName = buyerData['placeName'] ?? '';
   List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
   String buyerWasteQuantity = buyerData['WasteQuantity'] ?? '';
   GeoPoint buyerLocation = buyerData['location'];
@@ -193,39 +195,42 @@ if (selectedBuyerFullName != null) {
     buyerName = selectedBuyerFullName;
     buyerPhone = selectedBuyerPhone;
     buyerPlaceName = selectedBuyerPlaceName;
-    buyerLat = buyerLat;  // <-- No need to update buyerLat and buyerLon again
-    buyerLon = buyerLon;
-    selectedBuyerLocation = LatLng(buyerLat!, buyerLon!); 
+    selectedBuyerLocation = buyerLat != null && buyerLon != null
+        ? LatLng(buyerLat!, buyerLon!)
+        : null;
   });
 
   // Add the buyer's location to the markers
   setState(() {
-    markers.add(Marker(
-      markerId: MarkerId('selectedBuyer'),
-      position: selectedBuyerLocation!,
-    ));
+    if (selectedBuyerLocation != null) {
+      markers.add(Marker(
+        markerId: MarkerId('selectedBuyer'),
+        position: selectedBuyerLocation!,
+      ));
+    }
   });
 
-      // Display message to the seller
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$selectedBuyerFullName has been appointed to you.\n'
-              'Phone: $selectedBuyerPhone\nPlace Name: $selectedBuyerPlaceName'),
-        ),
-      );
+  // Display message to the seller
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('$selectedBuyerFullName has been appointed to you.\n'
+          'Phone: $selectedBuyerPhone\nPlace Name: $selectedBuyerPlaceName'),
+      duration: Duration(seconds: 5),
+    ),
+  );
 
-      // Update the UI or perform any other actions as needed
-      print('Selected Buyer Full Name: $selectedBuyerFullName');
-      print('Selected Buyer Phone: $selectedBuyerPhone');
-      print('Selected Buyer Place Name: $selectedBuyerPlaceName');
-    } else {
-      // No relevant buyer found
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No buyers are available.'),
-        ),
-      );
-    }
+  // Update the UI or perform any other actions as needed
+  print('Selected Buyer Full Name: $selectedBuyerFullName');
+  print('Selected Buyer Phone: $selectedBuyerPhone');
+  print('Selected Buyer Place Name: $selectedBuyerPlaceName');
+} else {
+  // No relevant buyer found
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('No buyers are available.'),
+    ),
+  );
+}
   } catch (e) {
     print('Error finding relevant buyer: $e');
   } finally {
@@ -462,27 +467,7 @@ Future<void> sendPickupRequest() async {
                       ),
                     ),
                   ),
-                ),
-              if (!isLoading && buyerName != null)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.green, // Set the background color to green
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Buyer Information', style: TextStyle(fontSize: 18, color: Colors.white)), // Set the font color to white
-                      SizedBox(height: 8),
-                      Text('Name: $buyerName', style: TextStyle(fontSize: 16, color: Colors.white)),
-                      Text('Phone: $buyerPhone', style: TextStyle(fontSize: 16, color: Colors.white)),
-                      Text('Place Name: $buyerPlaceName', style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ],
-                  ),
-                ),
-              ),
+                ),           
             ],
           ),
         ),

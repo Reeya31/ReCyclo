@@ -36,14 +36,21 @@ class _AccountSettingState extends State<AccountSetting> {
     User? user = _auth.currentUser;
 
     if (user != null) {
-      DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await _firestore.collection('sellers').doc(user.uid).get();
+  DocumentSnapshot<Map<String, dynamic>> snapshot;
 
-      setState(() {
-        _user = user;
-        _userData = snapshot.data();
-      });
-    }
+  // Check the userType from the 'buyers' collection
+  snapshot = await _firestore.collection('buyers').doc(user.uid).get();
+
+  if (snapshot == null || !snapshot.exists) {
+    // If not found in 'buyers', check the 'sellers' collection
+    snapshot = await _firestore.collection('sellers').doc(user.uid).get();
+  }
+
+  setState(() {
+    _user = user;
+    _userData = snapshot.data();
+  });
+}
   }
 
   // Logout() async {
