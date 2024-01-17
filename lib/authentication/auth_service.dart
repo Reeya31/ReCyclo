@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:wastehub/screens/auth_ui/signup.dart';
+import 'package:ReCyclo/screens/auth_ui/signup.dart';
 
   // enum UserType { Seller, Buyer }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wastehub/screens/account_screen/profile_setting.dart';
+import 'package:ReCyclo/screens/account_screen/profile_setting.dart';
 
 class SettingScreen extends StatelessWidget{
   const SettingScreen({super.key});

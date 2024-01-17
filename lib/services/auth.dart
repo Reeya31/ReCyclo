@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:wastehub/models/firebase_user.dart';
-import 'package:wastehub/models/login_user.dart';
+import 'package:ReCyclo/models/firebase_user.dart';
+import 'package:ReCyclo/models/login_user.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 // import 'package:recyclo/constants/routes.dart';
-import 'package:wastehub/models/waste_type.dart';
-// import 'package:wastehub/screens/auth_ui/account_setting.dart';
+import 'package:ReCyclo/models/waste_type.dart';
+// import 'package:ReCyclo/screens/auth_ui/account_setting.dart';
 
 // import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:wastehub/screens/auth_ui/login.dart';
-import 'package:wastehub/screens/basic/feedback.dart';
-import 'package:wastehub/screens/basic/sell_request.dart';
-// import 'package:wastehub/constants/themedata.dart';
-// import 'package:wastehub/main.dart';
+// import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:ReCyclo/screens/basic/feedback.dart';
+import 'package:ReCyclo/screens/basic/sell_request.dart';
+// import 'package:ReCyclo/constants/themedata.dart';
+// import 'package:ReCyclo/main.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

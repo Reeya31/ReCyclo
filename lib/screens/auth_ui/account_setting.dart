@@ -3,13 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // import 'package:wastehub/authentication/authentication_repository.dart';
-import 'package:wastehub/screens/auth_ui/login.dart';
-import 'package:wastehub/screens/auth_ui/user_profile.dart';
+import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:ReCyclo/screens/auth_ui/user_profile.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:wastehub/screens/basic/feedback.dart';
-import 'package:wastehub/screens/auth_ui/about_us.dart';
-import 'package:wastehub/screens/auth_ui/contact.dart';
-import 'package:wastehub/screens/auth_ui/settings.dart';
+import 'package:ReCyclo/screens/basic/feedback.dart';
+import 'package:ReCyclo/screens/auth_ui/about_us.dart';
+import 'package:ReCyclo/screens/auth_ui/contact.dart';
+import 'package:ReCyclo/screens/auth_ui/settings.dart';
 // import 'package:get/get.dart';
 
 class AccountSetting extends StatefulWidget {
@@ -37,7 +37,7 @@ class _AccountSettingState extends State<AccountSetting> {
 
     if (user != null) {
       DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await _firestore.collection('buyers').doc(user.uid).get();
+          await _firestore.collection('sellers').doc(user.uid).get();
 
       setState(() {
         _user = user;
@@ -143,7 +143,7 @@ class _AccountSettingState extends State<AccountSetting> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _userData?['fullName'] ?? '',
+                            _userData?['fullname'] ?? '',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),

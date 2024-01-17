@@ -59,7 +59,7 @@ class _FindingBuyerAnimationState extends State<FindingBuyerAnimation>
             );
           },
         ),
-        Text("Searching for Buyers")
+        Text("Searching for Buyers",style:TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color:Colors.white))
       ],
     );
   }
@@ -87,13 +87,23 @@ class _SellRequestState extends State<SellRequest> {
   List<String> wasteType = ["Plastic", "Paper", "Glass", "e-Waste"];
   List<bool> selectedWaste = [false, false, false, false];
 
+ bool showFindingBuyerAnimation = false; 
+
+  String? buyerName;
+  String? buyerPhone;
+  String? buyerPlaceName;
+  String? placeName; 
+
+  LatLng? selectedBuyerLocation;
+  double? buyerLat;
+  double? buyerLon;
+
   @override
   void initState() {
     super.initState();
     userMarker = Marker(markerId: const MarkerId('currentLocation'));
     getCurrentLocationOfUserAndFetchName();
     getCurrentLocation();
-    _pc = PanelController();
   }
 
   Future<void> getCurrentLocationOfUserAndFetchName() async {
@@ -121,97 +131,114 @@ class _SellRequestState extends State<SellRequest> {
 
   bool findingBuyer = false;
 
-  // Function to fetch buyer information based on the KNN algorithm
-  Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQuantity,
-      LatLng sellerLocation) async {
-    try {
-      // Fetch all buyer data from Firestore
-      QuerySnapshot buyersSnapshot =
-          await FirebaseFirestore.instance.collection('buyers').get();
+// Function to fetch buyer information based on the KNN algorithm
+Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQuantity,
+    LatLng sellerLocation) async {
+  try {
+    setState(() {
+      isLoading = false;
+      showFindingBuyerAnimation = true;
+    });
 
-      // Initialize variables to store the most relevant buyer data
-      String? selectedBuyerFullName;
-      String? selectedBuyerPhone;
-      double? minDistance;
+    await Future.delayed(Duration(seconds: 5)); // Simulate loading
 
-      // Iterate through each buyer
-      for (QueryDocumentSnapshot buyerSnapshot in buyersSnapshot.docs) {
-        // Get buyer data
-        Map<String, dynamic> buyerData = buyerSnapshot.data() as Map<String, dynamic>;
+    QuerySnapshot buyersSnapshot = await FirebaseFirestore.instance.collection('buyers').get();
 
-        // Extract relevant buyer information
-        String buyerFullName = buyerData['fullname'];
-        String buyerPhone = buyerData['phone'];
-        List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
-        String buyerWasteQuantity = buyerData['WasteQuantity'];
-        GeoPoint buyerLocation = buyerData['location'];
-        double buyerLat = buyerLocation.latitude;
-        double buyerLon = buyerLocation.longitude;
+    String? selectedBuyerFullName;
+    String? selectedBuyerPhone;
+    String? selectedBuyerPlaceName;
+    double? minDistance;
+    LatLng? selectedBuyerLocation;
 
-        // Convert buyer waste types to WasteType objects
-        List<String> buyerWasteTypeObjects = buyerWasteTypes
-            .asMap()
-            .entries
-            .where((entry) => entry.value)
-            .map((entry) => wasteType[entry.key])
-            .toList();
+    for (QueryDocumentSnapshot buyerSnapshot in buyersSnapshot.docs) {
+  Map<String, dynamic> buyerData = buyerSnapshot.data() as Map<String, dynamic>;
 
-        // Compare waste types
-        if (sellerWasteTypes.asMap().entries.any((entry) =>
-    entry.value && buyerWasteTypeObjects.contains(wasteType[entry.key]))) {
-          // Compare waste quantity
-          if (sellerWasteQuantity == buyerWasteQuantity) {
-            // Calculate distance using Haversine formula
-            double distance = calculateDistance(
-                sellerLocation.latitude, sellerLocation.longitude, buyerLat, buyerLon);
+  String buyerFullName = buyerData['fullname'] ?? '';
+  String buyerPhone = buyerData['phone'] ?? '';
+  String buyerPlaceName = buyerData['PlaceName'] ?? '';
+  List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
+  String buyerWasteQuantity = buyerData['WasteQuantity'] ?? '';
+  GeoPoint buyerLocation = buyerData['location'];
+  double buyerLat = buyerLocation.latitude;
+  double buyerLon = buyerLocation.longitude;
 
-            // Update the most relevant buyer if it's the first match or closer than previous matches
-            if (minDistance == null || distance < minDistance) {
-              minDistance = distance;
-              selectedBuyerFullName = buyerFullName;
-              selectedBuyerPhone = buyerPhone;
-            }
-          }
-        }
+  List<String> buyerWasteTypeObjects = buyerWasteTypes
+      .asMap()
+      .entries
+      .where((entry) => entry.value)
+      .map((entry) => wasteType[entry.key])
+      .toList();
 
-        // Debugging output for each buyer
-        print('Buyer Full Name: $buyerFullName');
-        print('Buyer Phone: $buyerPhone');
-        print('Buyer Waste Types: $buyerWasteTypeObjects');
-        print('Buyer Waste Quantity: $buyerWasteQuantity');
-        print('Distance to Buyer: $minDistance');
-        print('-----------------------------------');
+  if (sellerWasteTypes.asMap().entries.any((entry) =>
+      entry.value && buyerWasteTypeObjects.contains(wasteType[entry.key]))) {
+    if (sellerWasteQuantity == buyerWasteQuantity) {
+      double distance = calculateDistance(
+          sellerLocation.latitude, sellerLocation.longitude, buyerLat, buyerLon);
+
+      if (minDistance == null || distance < minDistance) {
+        minDistance = distance;
+        selectedBuyerFullName = buyerFullName;
+        selectedBuyerPhone = buyerPhone;
+        selectedBuyerPlaceName = buyerPlaceName;
+        selectedBuyerLocation = LatLng(buyerLat, buyerLon);
       }
-
-      // Display relevant buyer information to the seller
-      if (selectedBuyerFullName != null) {
-        // Display message to the seller
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$selectedBuyerFullName has been appointed to you.'),
-          ),
-        );
-
-        // Update the UI or perform any other actions as needed
-
-        print('Selected Buyer Full Name: $selectedBuyerFullName');
-        print('Selected Buyer Phone: $selectedBuyerPhone');
-      } else {
-        // No relevant buyer found
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No buyers are available.'),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error finding relevant buyer: $e');
-      // Handle the error (show an error message, etc.)
     }
   }
+}
 
-  // Method for calculating distance (Haversine formula)
-  double calculateDistance(double startLat, double startLon, double endLat, double endLon) {
+    
+if (selectedBuyerFullName != null) {
+  // Set buyer information
+  setState(() {
+    buyerName = selectedBuyerFullName;
+    buyerPhone = selectedBuyerPhone;
+    buyerPlaceName = selectedBuyerPlaceName;
+    buyerLat = buyerLat;  // <-- No need to update buyerLat and buyerLon again
+    buyerLon = buyerLon;
+    selectedBuyerLocation = LatLng(buyerLat!, buyerLon!); 
+  });
+
+  // Add the buyer's location to the markers
+  setState(() {
+    markers.add(Marker(
+      markerId: MarkerId('selectedBuyer'),
+      position: selectedBuyerLocation!,
+    ));
+  });
+
+      // Display message to the seller
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$selectedBuyerFullName has been appointed to you.\n'
+              'Phone: $selectedBuyerPhone\nPlace Name: $selectedBuyerPlaceName'),
+        ),
+      );
+
+      // Update the UI or perform any other actions as needed
+      print('Selected Buyer Full Name: $selectedBuyerFullName');
+      print('Selected Buyer Phone: $selectedBuyerPhone');
+      print('Selected Buyer Place Name: $selectedBuyerPlaceName');
+    } else {
+      // No relevant buyer found
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No buyers are available.'),
+        ),
+      );
+    }
+  } catch (e) {
+    print('Error finding relevant buyer: $e');
+  } finally {
+    setState(() {
+      isLoading = false;
+      showFindingBuyerAnimation = false;
+    });
+  }
+}
+
+
+// Method for calculating distance (Haversine formula)
+double calculateDistance(double startLat, double startLon, double endLat, double endLon) {
     const double earthRadius = 6371.0; // Earth radius in kilometers
 
     // Convert degrees to radians
@@ -237,7 +264,8 @@ class _SellRequestState extends State<SellRequest> {
     return haversineDistance(startLat, startLon, endLat, endLon);
   }
 
-  Future<void> sendPickupRequest() async {
+
+Future<void> sendPickupRequest() async {
     try {
       // Get the selected waste type and quantity
       List<String> selectedWasteTypes = wasteType
@@ -254,7 +282,7 @@ class _SellRequestState extends State<SellRequest> {
       String placeName = addressController.text;
       LatLng currentLocation = userMarker.position;
 
-        if (selectedWasteTypes.isNotEmpty) {
+      if (selectedWasteTypes.isNotEmpty) {
         // Construct the pickup request data with an array of boolean values for waste types
         Map<String, dynamic> pickupRequestData = {
           'WasteType': selectedWaste,
@@ -265,7 +293,8 @@ class _SellRequestState extends State<SellRequest> {
 
         // Send the pickup request to Firestore
         await FirebaseFirestore.instance.collection('pickupRequests').add(pickupRequestData);
-
+        // Collapse the sliding panel after sending the request
+        _pc.close();
         // Show a success message or navigate to a confirmation screen
         print('Pickup request sent successfully!');
 
@@ -285,7 +314,7 @@ class _SellRequestState extends State<SellRequest> {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
@@ -333,19 +362,19 @@ class _SellRequestState extends State<SellRequest> {
                       width: 12,
                     ),
                     ListView.builder(
-              shrinkWrap: true,
-              itemCount: wasteType.length,
-              itemBuilder: (context, index) {
-                return CheckboxListTile(
-                    title: Text(wasteType[index]),
-                    value: selectedWaste[index],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedWaste[index] = value!;
-                      });
-                    });
-              },
-            ),
+                      shrinkWrap: true,
+                      itemCount: wasteType.length,
+                      itemBuilder: (context, index) {
+                        return CheckboxListTile(
+                            title: Text(wasteType[index]),
+                            value: selectedWaste[index],
+                            onChanged: (value) {
+                              setState(() {
+                                selectedWaste[index] = value!;
+                              });
+                            });
+                      },
+                    ),
                   ],
                 ),
                 SizedBox(height: 10),
@@ -378,7 +407,7 @@ class _SellRequestState extends State<SellRequest> {
                 ElevatedButton(
                   onPressed: () {
                     // Check if at least one waste type is selected
-                     if (selectedWaste.any((waste) => waste)) {
+                    if (selectedWaste.any((waste) => waste)) {
                       sendPickupRequest();
                     } else {
                       // Show message "Please select a waste type" at the bottom of the page
@@ -396,19 +425,65 @@ class _SellRequestState extends State<SellRequest> {
               ],
             ),
           ),
-          body: GoogleMap(
-            initialCameraPosition: const CameraPosition(
-                target: LatLng(27.672468, 85.337924), zoom: 14),
-            markers: markers,
-            zoomControlsEnabled: false,
-            mapType: MapType.normal,
-            onMapCreated: (GoogleMapController controller) {
-              googleMapController = controller;
-            },
-            onTap: (LatLng latLng) {
-              addOrUpdateMarker(latLng);
-              getPlaceName(latLng);
-            },
+          controller: _pc, 
+          body: Stack(
+            children: [
+              GoogleMap(
+                initialCameraPosition: const CameraPosition(
+                    target: LatLng(27.672468, 85.337924), zoom: 14),
+                // markers: markers,
+                markers: markers..addAll(selectedBuyerLocation != null
+                    ? [Marker(markerId: const MarkerId('selectedBuyer'), position: selectedBuyerLocation!)]
+                    : []),
+
+                zoomControlsEnabled: false,
+                mapType: MapType.normal,
+                onMapCreated: (GoogleMapController controller) {
+                  googleMapController = controller;
+                },
+                onTap: (LatLng latLng) {
+                  addOrUpdateMarker(latLng);
+                  getPlaceName(latLng);
+                },
+              ),
+               if (showFindingBuyerAnimation || isLoading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FindingBuyerAnimation(),
+                          SizedBox(height: 16),
+    
+                          if (isLoading) CircularProgressIndicator(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              if (!isLoading && buyerName != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.green, // Set the background color to green
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Buyer Information', style: TextStyle(fontSize: 18, color: Colors.white)), // Set the font color to white
+                      SizedBox(height: 8),
+                      Text('Name: $buyerName', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      Text('Phone: $buyerPhone', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      Text('Place Name: $buyerPlaceName', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

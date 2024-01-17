@@ -5,23 +5,23 @@ class Contact extends StatelessWidget {
   _launchEmail() async {
     const email = 'mailto:recyclo@gmail.com';
     // ignore: deprecated_member_use
-    if (await canLaunch(email)) {
-      // ignore: deprecated_member_use
-      await launch(email);
-    } else {
-      throw 'Could not launch $email';
-    }
+    try {
+    // ignore: deprecated_member_use
+    await launch(email.toString());
+  } catch (e) {
+    print('Error launching email: $e');
   }
+}
 
   _launchPhone() async {
     const phone = 'tel:+9779800123456';
     // ignore: deprecated_member_use
-    if (await canLaunch(phone)) {
-      // ignore: deprecated_member_use
-      await launch(phone);
-    } else {
-      throw 'Could not launch $phone';
-    }
+    try {
+    // ignore: deprecated_member_use
+    await launch(phone.toString());
+  } catch (e) {
+    print('Error launching phone: $e');
+  }
   }
 
   @override

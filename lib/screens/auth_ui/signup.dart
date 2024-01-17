@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:wastehub/authentication/auth_service.dart';
-import 'package:wastehub/screens/auth_ui/login.dart';
+import 'package:ReCyclo/authentication/auth_service.dart';
+import 'package:ReCyclo/screens/auth_ui/login.dart';
 
 class Signup extends StatefulWidget {
   // const Signup({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wastehub/screens/auth_ui/login.dart';
-import 'package:wastehub/screens/auth_ui/signup.dart';
+import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:ReCyclo/screens/auth_ui/signup.dart';
 
 import '../../constants/routes.dart';
 // import 'package:wastehub/constants.dart';

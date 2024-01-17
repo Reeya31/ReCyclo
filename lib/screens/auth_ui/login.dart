@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:wastehub/screens/basic/buyer_home.dart';
-import 'package:wastehub/screens/basic/seller_home.dart';
-import 'package:wastehub/authentication/auth_service.dart';
+import 'package:ReCyclo/screens/basic/buyer_home.dart';
+import 'package:ReCyclo/screens/basic/seller_home.dart';
+import 'package:ReCyclo/authentication/auth_service.dart';
 
 enum UserType { Seller, Buyer }
 

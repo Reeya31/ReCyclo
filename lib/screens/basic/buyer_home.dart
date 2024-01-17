@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:wastehub/screens/basic/feedback.dart';
+import 'package:ReCyclo/screens/basic/feedback.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
 import 'package:location/location.dart';

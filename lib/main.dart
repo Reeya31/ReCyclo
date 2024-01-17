@@ -1,16 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:wastehub/constants/themedata.dart';
-import 'package:wastehub/firebase_options.dart';
-import 'package:wastehub/models/firebase_user.dart';
-import 'package:wastehub/screens/auth_ui/account_setting.dart';
-import 'package:wastehub/screens/auth_ui/login.dart';
-import 'package:wastehub/screens/auth_ui/signup.dart';
-import 'package:wastehub/screens/auth_ui/user_profile.dart';
-import 'package:wastehub/screens/auth_ui/settings.dart';
-import 'package:wastehub/screens/basic/seller_home.dart';
-import 'package:wastehub/screens/basic/welcome.dart';
-import 'package:wastehub/services/auth.dart';
+import 'package:ReCyclo/constants/themedata.dart';
+import 'package:ReCyclo/firebase_options.dart';
+import 'package:ReCyclo/models/firebase_user.dart';
+import 'package:ReCyclo/screens/auth_ui/account_setting.dart';
+import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:ReCyclo/screens/auth_ui/signup.dart';
+import 'package:ReCyclo/screens/auth_ui/user_profile.dart';
+import 'package:ReCyclo/screens/auth_ui/settings.dart';
+import 'package:ReCyclo/screens/basic/seller_home.dart';
+import 'package:ReCyclo/screens/basic/welcome.dart';
+import 'package:ReCyclo/services/auth.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 

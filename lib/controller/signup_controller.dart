@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:wastehub/authentication/authentication_repository.dart';
+import 'package:ReCyclo/authentication/authentication_repository.dart';
 
 class SignUpController extends GetxController {
   static SignUpController get instance => Get.find();
