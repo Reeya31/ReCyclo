@@ -1,7 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -67,6 +70,117 @@ class _FindingBuyerAnimationState extends State<FindingBuyerAnimation>
   }
 }
 
+class BuyerInformationBox extends StatelessWidget {
+  final String? buyerName;
+  final String? buyerPhone;
+  final String? buyerPlaceName;
+  final Function(BuildContext)? onCancelPressed;
+
+  const BuyerInformationBox({
+    Key? key,
+    this.buyerName,
+    this.buyerPhone,
+    this.buyerPlaceName,
+    this.onCancelPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        padding: EdgeInsets.all(16),
+        color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '$buyerName has been chosen as your buyer',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color:Color.fromARGB(255, 22, 109, 25),),
+            ),
+            SizedBox(height: 10),
+            buildInfoRow(
+              icon: Icons.phone,
+              text: 'Call the buyer: $buyerPhone',
+              color: Color.fromARGB(255, 22, 109, 25),
+              onTap: () => _launchPhoneDialer(buyerPhone),
+            ),
+            SizedBox(height: 10),
+            buildInfoRow(
+              icon: Icons.location_on,
+              text: '$buyerPlaceName',
+              color: Color.fromARGB(255, 22, 109, 25),
+            ),
+            SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                // Check if onCancelPressed is not null, then call it
+                onCancelPressed?.call(context);
+              },
+              child: Container(
+                padding: EdgeInsets.all(12),
+                color: Color.fromARGB(255, 187, 16, 4), 
+                alignment: Alignment.center,
+                child: Text(
+                  'Cancel Request',
+                  style: TextStyle(color: Colors.white, fontSize: 20,),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+  Widget buildInfoRow({
+  required IconData icon,
+  required String text,
+  required Color color, // Add the 'color' parameter
+  VoidCallback? onTap,
+}) {
+  return Row(
+    children: [
+      Icon(
+        icon,
+        color: color,
+      ),
+      SizedBox(width: 8),
+      Expanded(
+        child: InkWell(
+          onTap: onTap,
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 20, color:Color.fromARGB(255, 22, 109, 25),),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+  Future<void> _launchPhoneDialer(String? phoneNumber) async {
+    if (phoneNumber != null && await canLaunch('tel:$phoneNumber')) {
+      await launch('tel:$phoneNumber');
+    } else {
+      print('Could not launch phone dialer.');
+    }
+  }
+
+void onCancelPressed(BuildContext context) {
+  // Unselect the buyer and navigate back to the sell request page
+  Navigator.pop(context); // This will close the current screen and return to the previous one
+  // Show a popup message (you can use a package like 'fluttertoast' or 'flushbar' for this)
+  // Example using 'fluttertoast':
+  Fluttertoast.showToast(
+    msg: "Your request has been cancelled",
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.BOTTOM,
+    backgroundColor: Colors.black,
+    textColor: Colors.white,
+  );
+}
+
 
 class SellRequest extends StatefulWidget {
   const SellRequest({Key? key}) : super(key: key);
@@ -100,6 +214,10 @@ class _SellRequestState extends State<SellRequest> {
   double? buyerLat;
   double? buyerLon;
 
+  Map<String, dynamic>? selectedBuyer;
+
+  bool hasBuyerInformation = false;
+
   @override
   void initState() {
     super.initState();
@@ -107,6 +225,52 @@ class _SellRequestState extends State<SellRequest> {
     getCurrentLocationOfUserAndFetchName();
     getCurrentLocation();
   }
+ 
+    // Function to handle cancel button press
+  void onCancelPressed(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Cancel Request"),
+          content: Text("Are you sure you want to cancel your request?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Dismiss the dialog
+                Navigator.of(context).pop();
+              },
+              child: Text("No"),
+            ),
+            TextButton(
+              onPressed: () {
+                // Clear buyer information and reset the panel
+                clearBuyerInformation();
+
+                // Close the current panel (BuyerInformationBox)
+                _pc.close();
+
+                // Show a confirmation message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Your request has been cancelled.'),
+                  ),
+                );
+
+                // Navigate back to the sell request screen
+                Navigator.pop(context);
+
+                // Dismiss the dialog
+                Navigator.of(context).pop();
+              },
+              child: Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Future<void> getCurrentLocationOfUserAndFetchName() async {
     await getCurrentLocationOfUser(); // Get the current location
@@ -190,48 +354,38 @@ Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQu
 
     
 if (selectedBuyerFullName != null) {
-  // Set buyer information
-  setState(() {
-    buyerName = selectedBuyerFullName;
-    buyerPhone = selectedBuyerPhone;
-    buyerPlaceName = selectedBuyerPlaceName;
-    selectedBuyerLocation = buyerLat != null && buyerLon != null
-        ? LatLng(buyerLat!, buyerLon!)
-        : null;
-  });
+    setState(() {
+      selectedBuyer = {
+        'name': selectedBuyerFullName,
+        'phone': selectedBuyerPhone,
+        'placeName': selectedBuyerPlaceName,
+        'location': {'latitude': buyerLat, 'longitude': buyerLon}
+      };
+    });
 
-  // Add the buyer's location to the markers
-  setState(() {
-    if (selectedBuyerLocation != null) {
-      markers.add(Marker(
-        markerId: MarkerId('selectedBuyer'),
-        position: selectedBuyerLocation!,
-      ));
-    }
-  });
+    // Add the buyer's location to the markers
+    setState(() {
+      if (selectedBuyerLocation != null) {
+        markers.add(Marker(
+          markerId: MarkerId('selectedBuyer'),
+          position: selectedBuyerLocation!,
+        ));
+      }
+    });
 
-  // Display message to the seller
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('$selectedBuyerFullName has been appointed to you.\n'
-          'Phone: $selectedBuyerPhone\nPlace Name: $selectedBuyerPlaceName'),
-      duration: Duration(seconds: 5),
-    ),
-  );
-
-  // Update the UI or perform any other actions as needed
-  print('Selected Buyer Full Name: $selectedBuyerFullName');
-  print('Selected Buyer Phone: $selectedBuyerPhone');
-  print('Selected Buyer Place Name: $selectedBuyerPlaceName');
-} else {
-  // No relevant buyer found
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('No buyers are available.'),
-    ),
-  );
+    print('Selected Buyer Full Name: $selectedBuyerFullName');
+    print('Selected Buyer Phone: $selectedBuyerPhone');
+    print('Selected Buyer Place Name: $selectedBuyerPlaceName');
+  } else {
+    // No relevant buyer found
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No buyers are available.'),
+      ),
+    );
+  }
 }
-  } catch (e) {
+ catch (e) {
     print('Error finding relevant buyer: $e');
   } finally {
     setState(() {
@@ -319,127 +473,43 @@ Future<void> sendPickupRequest() async {
     }
   }
 
- @override
+ // Method to clear buyer information and reset the panel
+  void clearBuyerInformation() {
+    setState(() {
+      hasBuyerInformation = false;
+      buyerName = null;
+      buyerPhone = null;
+      buyerPlaceName = null;
+      selectedBuyerLocation = null;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
         child: SlidingUpPanel(
-          minHeight: 100,
+          minHeight: 150,
           maxHeight: MediaQuery.of(context).size.height - 200,
-          panel: Container(
-            padding: EdgeInsets.all(16),
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    margin: EdgeInsets.only(top: 8),
-                    height: 5,
-                    width: 100,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey),
-                  ),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                TextField(
-                  controller: addressController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    suffixIcon: const Icon(Icons.location_on),
-                  ),
-                ),
-                Column(
-                  children: [
-                    Text(
-                      'Waste Type :',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(
-                      width: 12,
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: wasteType.length,
-                      itemBuilder: (context, index) {
-                        return CheckboxListTile(
-                            title: Text(wasteType[index]),
-                            value: selectedWaste[index],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedWaste[index] = value!;
-                              });
-                            });
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(
-                      'Waste Quantity:',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(
-                      width: 12,
-                    ),
-                    DropdownButton<String>(
-                      value: _selectedWasteQuantity,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedWasteQuantity = newValue!;
-                        });
-                      },
-                      items: _wasteQuantities.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    // Check if at least one waste type is selected
-                    if (selectedWaste.any((waste) => waste)) {
-                      sendPickupRequest();
-                    } else {
-                      // Show message "Please select a waste type" at the bottom of the page
-                      final snackBarError = SnackBar(
-                        content: Text('Please select at least one waste type'),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(snackBarError);
-                    }
-                  },
-                  child: Text(
-                    'Send Request',
-                    style: TextStyle(fontSize: 15, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          controller: _pc, 
+          panel: selectedBuyer != null
+            ? BuyerInformationBox(
+                buyerName: selectedBuyer!['name'],
+                buyerPhone: selectedBuyer!['phone'],
+                buyerPlaceName: selectedBuyer!['placeName'],
+                onCancelPressed: (context) => onCancelPressed(context),
+              )
+            : buildSlidingPanelContent(),
+          controller: _pc,
           body: Stack(
             children: [
               GoogleMap(
                 initialCameraPosition: const CameraPosition(
                     target: LatLng(27.672468, 85.337924), zoom: 14),
-                // markers: markers,
-                markers: markers..addAll(selectedBuyerLocation != null
-                    ? [Marker(markerId: const MarkerId('selectedBuyer'), position: selectedBuyerLocation!)]
-                    : []),
+                markers: markers
+                  ..addAll(selectedBuyerLocation != null
+                      ? [Marker(markerId: const MarkerId('selectedBuyer'), position: selectedBuyerLocation!)]
+                      : []),
 
                 zoomControlsEnabled: false,
                 mapType: MapType.normal,
@@ -451,7 +521,7 @@ Future<void> sendPickupRequest() async {
                   getPlaceName(latLng);
                 },
               ),
-               if (showFindingBuyerAnimation || isLoading)
+              if (showFindingBuyerAnimation || isLoading)
                 Positioned.fill(
                   child: Container(
                     color: Colors.black.withOpacity(0.5),
@@ -461,19 +531,127 @@ Future<void> sendPickupRequest() async {
                         children: [
                           FindingBuyerAnimation(),
                           SizedBox(height: 16),
-    
                           if (isLoading) CircularProgressIndicator(),
                         ],
                       ),
                     ),
                   ),
-                ),           
+                ),
             ],
           ),
         ),
       ),
     );
   }
+
+// Method to build the sliding panel content with waste type, quantity, and place name
+  Widget buildSlidingPanelContent() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              margin: EdgeInsets.only(top: 8),
+              height: 5,
+              width: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          TextField(
+            controller: addressController,
+            readOnly: true,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Colors.grey),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              suffixIcon: const Icon(Icons.location_on),
+            ),
+          ),
+          Column(
+            children: [
+              Text(
+                'Waste Type :',
+                style: TextStyle(fontSize: 18),
+              ),
+              SizedBox(
+                width: 12,
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: wasteType.length,
+                itemBuilder: (context, index) {
+                  return CheckboxListTile(
+                      title: Text(wasteType[index]),
+                      value: selectedWaste[index],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedWaste[index] = value!;
+                        });
+                      });
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                'Waste Quantity:',
+                style: TextStyle(fontSize: 18),
+              ),
+              SizedBox(
+                width: 12,
+              ),
+              DropdownButton<String>(
+                value: _selectedWasteQuantity,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedWasteQuantity = newValue!;
+                  });
+                },
+                items: _wasteQuantities.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              // Check if at least one waste type is selected
+              if (selectedWaste.any((waste) => waste)) {
+                sendPickupRequest();
+              } else {
+                // Show message "Please select a waste type" at the bottom of the page
+                final snackBarError = SnackBar(
+                  content: Text('Please select at least one waste type'),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+              }
+            },
+            child: Text(
+              'Send Request',
+              style: TextStyle(fontSize: 15, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> getCurrentLocation() async {
     try {
