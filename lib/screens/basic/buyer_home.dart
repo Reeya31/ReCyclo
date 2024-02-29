@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -10,6 +10,7 @@ import 'package:location/location.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class BuyerHome extends StatefulWidget {
   const BuyerHome({Key? key});
@@ -26,13 +27,20 @@ class _HomeState extends State<BuyerHome> {
   late Marker userMarker = Marker(markerId: const MarkerId('currentLocation'));
   Set<Marker> markers = {};
 
+  late io.Socket socket;
+
   late User? _user;
   late FirebaseFirestore firestore;
 
   @override
   void initState() {
     super.initState();
+    socket = io.io('http://192.168.79.178:3000', <String, dynamic>{
+      'transport': ['webSocket'],
+      'autoConnect': false,
+    });
 
+    socket.connect();
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       setState(() {
         _user = user;
@@ -75,38 +83,66 @@ class _HomeState extends State<BuyerHome> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        iconTheme: const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
-        title: const Text(
-          "Recyclo",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+
+    Future<bool> showExitPopup() async {
+      return await showDialog( //show confirm dialogue 
+        //the return value will be from "Yes" or "No" options
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Exit App'),
+          content: Text('Do you want to exit an App?'),
+          actions:[
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+               //return false when click on "NO"
+              child:Text('No'),
+            ),
+
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true), 
+              //return true when click on "Yes"
+              child:Text('Yes'),
+            ),
+
+          ],
         ),
-        backgroundColor: const Color.fromARGB(255, 8, 149, 128),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, 'history_screen'); // Replace with the actual name of your history screen
-            },
-            icon: const Icon(
-              Icons.notifications,
-              color: Colors.white,
-            ),
+      )??false; //if showDialouge had returned null, then return false
+    }
+
+    // ignore: deprecated_member_use
+    return WillPopScope( 
+      onWillPop: showExitPopup, //call function on back button press
+      child:Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          iconTheme:
+              const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
+          title: const Text(
+            "Recyclo",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, 'account_screen');
-            },
-            icon: const Icon(
-              Icons.circle,
-              color: Colors.white,
+          backgroundColor: const Color.fromARGB(255, 8, 149, 128),
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.notifications,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
-      ),
+            IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'account_screen');
+              },
+              icon: const Icon(
+                Icons.circle,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
       body: SafeArea(
         child: SlidingUpPanel(
           minHeight: 50,
@@ -163,6 +199,7 @@ class _HomeState extends State<BuyerHome> {
           ),
         ),
       ),
+    ),
     );
   }
 

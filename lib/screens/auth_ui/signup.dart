@@ -100,20 +100,7 @@ class _SignupState extends State<Signup> {
           // Add other fields as needed
         });
 
-        // if (selectedUserType == UserType.Buyer) {
-        //   await FirebaseFirestore.instance
-        //       .collection('buyers')
-        //       .doc(userCredential.user?.uid)
-        //       .set({
-        //     'selectedWaste': selectedWaste,
-        //     'initialSelectedQty': initialSelectedQty,
 
-        //     // Add other buyer-related fields as needed
-        //   });
-
-        //   validateWasteFields();
-        // }
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
               "Registered Succesfully!",
@@ -124,16 +111,6 @@ class _SignupState extends State<Signup> {
             ),
             backgroundColor: Color.fromARGB(255, 8, 149, 128)));
 
-        // await FirebaseFirestore.instance
-        //     .collection('buyers')
-        //     .doc(userCredential.user?.uid)
-        //     .set({
-        //   'selectedWaste': selectedWaste,
-        //   'initialSelectedQty': initialSelectedQty,
-        //   // Add other buyer-related fields as needed
-        // });
-
-        // ignore: use_build_context_synchronously
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => Login()));
       } on FirebaseAuthException catch (e) {
@@ -163,18 +140,6 @@ class _SignupState extends State<Signup> {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
-
-        // await FirebaseFirestore.instance
-        //     .collection('users')
-        //     .doc(userCredential.user?.uid)
-        //     .set({
-        //   'fullName': fullName,
-        //   'email': email,
-        //   'phone': phone,
-        //   'password': password,
-        //   'userType': selectedUserType == UserType.Seller ? 'Seller' : 'Buyer',
-        //   // Add other fields as needed
-        // });
 
         await FirebaseFirestore.instance
             .collection('buyers')
@@ -350,7 +315,10 @@ class _SignupState extends State<Signup> {
                 )),
           ],
         );
-      case UserType.Buyer:
+
+
+
+    case UserType.Buyer:
         return Column(
           children: [
             Padding(

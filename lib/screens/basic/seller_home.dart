@@ -20,7 +20,7 @@ class Home extends StatefulWidget {
 // String selectedCategory = "";
 // List<String> categories = ["Plastic", "Metal", "Paper", "e-Waste", "Others"];
 class _HomeState extends State<Home> {
-  String selectedCategory = "";
+  String selectedCategory = "Plastic";
 
   List<WasteItemCategory> wasteItemCategories = [
     WasteItemCategory(categoryName: "Plastic", items: [
@@ -87,57 +87,67 @@ class _HomeState extends State<Home> {
     ])
   ];
 
-  @override
+@override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        iconTheme:
-            const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
-        title: const Text(
-          "Recyclo",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+
+    Future<bool> showExitPopup() async {
+      return await showDialog( //show confirm dialogue 
+        //the return value will be from "Yes" or "No" options
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Exit App'),
+          content: Text('Do you want to exit?'),
+          actions:[
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+               //return false when click on "NO"
+              child:Text('No'),
+            ),
+
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true), 
+              //return true when click on "Yes"
+              child:Text('Yes'),
+            ),
+
+          ],
         ),
-        backgroundColor: const Color.fromARGB(255, 8, 149, 128),
-        actions: [
-          IconButton(
+      )??false; //if showDialouge had returned null, then return false
+    }
+
+    // ignore: deprecated_member_use
+    return WillPopScope( 
+      onWillPop: showExitPopup, //call function on back button press
+      child:Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          iconTheme:
+              const IconThemeData(color: Color.fromARGB(255, 247, 245, 245)),
+          title: const Text(
+            "Recyclo",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          backgroundColor: const Color.fromARGB(255, 8, 149, 128),
+          actions: [
+            IconButton(
               onPressed: () {},
               icon: const Icon(
                 Icons.notifications,
                 color: Colors.white,
-              )),
-          Builder(builder: (context) {
-            return IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, 'account_screen');
-                },
-                icon: const Icon(
-                  Icons.circle,
-                  color: Colors.white,
-                ));
-          })
-        ],
-      ),
-      // floatingActionButton: FloatingActionButton.extended(
-      //   onPressed: () {
-      //     Navigator.push(
-      //         context, MaterialPageRoute(builder: (context) => FeedbackPage(userType: 'Seller',)));
-      //   },
-      //   label: Text("Provide Feedback"),
-      //   backgroundColor: Color.fromARGB(255, 8, 149, 128),
-      //   foregroundColor: Colors.white,
-      // ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      // body: Padding(
-      //   padding: const EdgeInsets.all(15),
-      //   child: GridView.count(
-
-      //     crossAxisCount: 2,
-      //     crossAxisSpacing: 5,
-      //   ),
-      // ),
-
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'account_screen');
+              },
+              icon: const Icon(
+                Icons.circle,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      
       body: SingleChildScrollView(
       child: Padding(
           padding: const EdgeInsets.all(30),
@@ -171,29 +181,10 @@ direction: Axis.horizontal,
                       );
                     }).toList(),
                   ),
-
-                  // children: wasteTypes.map((WasteType) {
-                  //   return TextButton(
-                  //     onPressed: () {
-                  //       setState(() {
-                  //         selectedCategory = WasteType.name;
-                  //         print("Selected Category:$selectedCategory");
-                  //       });
-                  //     },
-                  //     child: Text(WasteType.name),
-                  //   );
-                  // }).toList(),
-                  // children: [
-                  //   TextButton(
-                  //       onPressed: () {}, child: const Text("Plastic")),
-                  //   TextButton(onPressed: () {}, child: Text("Paper")),
-                  //   TextButton(onPressed: () {}, child: Text("Metal")),
-                  //   TextButton(onPressed: () {}, child: Text("e-waste")),
-                  //   TextButton(onPressed: () {}, child: Text("others")),
-                  // ]
+               
                 ),
                 const SizedBox(
-                  height: 40,
+                  height: 30,
                 ),
                 if (selectedCategory.isNotEmpty)
                   GridView.builder(
@@ -214,11 +205,15 @@ direction: Axis.horizontal,
                               category.categoryName == selectedCategory)
                           .items[index];
                       return Card(
+                        
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          
                           children: [
+                            
                             Image.asset(selectedItem.imageUrl,
-                                height: 120, width: 100, fit: BoxFit.contain,
+                            
+                                 width: 100, fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                               print("Error loading image: $error");
                               return const SizedBox();
@@ -254,6 +249,7 @@ direction: Axis.horizontal,
               ],
             ),
           ))),
+    ),
     );
   }
 }

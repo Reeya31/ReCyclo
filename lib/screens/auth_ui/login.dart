@@ -76,19 +76,28 @@ class _LoginState extends State<Login> {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      // Handle FirebaseAuthException
-      if (e.code == 'user-not-found') {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("No user found for that email"),
-            backgroundColor: Color.fromARGB(255, 8, 149, 128)));
-      } else if (e.code == 'wrong-password') {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Wrong Password"),
-            backgroundColor: Color.fromARGB(255, 8, 149, 128)));
-      }
+      print('FirebaseAuthException: ${e.code}');
+    // Check for specific errors
+    if (e.code == 'user-not-found') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("No user found for that email"),
+          backgroundColor: const Color.fromARGB(255, 8, 149, 128),
+        ),
+      );
+    } else if (e.code == 'wrong-password') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Wrong Password"),
+          backgroundColor: Color.fromARGB(255, 8, 149, 128),
+        ),
+      );
     }
+  } catch (e) {
+    print('Unexpected error during login: $e');
   }
-
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

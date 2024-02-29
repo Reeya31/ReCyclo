@@ -2,7 +2,9 @@
 
 import 'dart:async';
 import 'dart:math';
+import 'package:ReCyclo/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
@@ -204,6 +206,7 @@ class _SellRequestState extends State<SellRequest> {
   List<bool> selectedWaste = [false, false, false, false];
 
  bool showFindingBuyerAnimation = false; 
+ int selectedIndex = -1;
 
   String? buyerName;
   String? buyerPhone;
@@ -426,40 +429,71 @@ double calculateDistance(double startLat, double startLon, double endLat, double
 
 Future<void> sendPickupRequest() async {
     try {
-      // Get the selected waste type and quantity
-      List<String> selectedWasteTypes = wasteType
-          .asMap()
-          .entries
-          .where((entry) => selectedWaste[entry.key])
-          .map((entry) => entry.value)
-          .toList();
+      User? user = FirebaseAuth.instance.currentUser;
 
+      if (user != null) {
+        DocumentSnapshot sellerInfo = await FirebaseFirestore.instance
+            .collection('sellers')
+            .doc(user.uid)
+            .get();
 
-      String wasteQuantity = _selectedWasteQuantity;
+        // Check if the seller info exists
+        if (sellerInfo.exists) {
+          String sellerFullname = sellerInfo['fullname'];
+          String sellerPhone = sellerInfo['phone'];
 
-      // Get the current location details
-      String placeName = addressController.text;
-      LatLng currentLocation = userMarker.position;
+          List<String> selectedWasteTypes = wasteType
+              .asMap()
+              .entries
+              .where((entry) => selectedWaste[entry.key])
+              .map((entry) => entry.value)
+              .toList();
 
-      if (selectedWasteTypes.isNotEmpty) {
-        // Construct the pickup request data with an array of boolean values for waste types
-        Map<String, dynamic> pickupRequestData = {
-          'WasteType': selectedWaste,
-          'WasteQuantity': wasteQuantity,
-          'PlaceName': placeName,
-          'location': GeoPoint(currentLocation.latitude, currentLocation.longitude),
-        };
+          String wasteQuantity = _selectedWasteQuantity;
 
-        // Send the pickup request to Firestore
-        await FirebaseFirestore.instance.collection('pickupRequests').add(pickupRequestData);
-        // Collapse the sliding panel after sending the request
-        _pc.close();
-        // Show a success message or navigate to a confirmation screen
-        print('Pickup request sent successfully!');
+          // Get the current location details
+          String placeName = addressController.text;
+          LatLng currentLocation = userMarker.position;
 
-        // Find the most relevant buyer
-        await findRelevantBuyer(
-            selectedWaste, _selectedWasteQuantity, currentLocation);
+// Emit a pickup request event to the Socket.IO server
+          socket.emit('pickup_request', {
+            'sellerName': sellerFullname,
+            'sellerPhone': sellerPhone,
+            'wasteTypes': selectedWaste,
+            'wasteQuantity': _selectedWasteQuantity,
+            'laltitude': currentLocation.latitude,
+            'longitude': currentLocation.longitude,
+            // 'location': {
+            //   GeoPoint(currentLocation.latitude, currentLocation.longitude)
+            // },
+          });
+
+// Get the selected waste type and quantity
+
+          if (selectedWasteTypes.isNotEmpty) {
+            // Construct the pickup request data with an array of boolean values for waste types
+            Map<String, dynamic> pickupRequestData = {
+              'Name': sellerFullname,
+              'PhoneNumber': sellerPhone,
+              'WasteType': selectedWaste,
+              'WasteQuantity': wasteQuantity,
+              'PlaceName': placeName,
+              'location':
+                  GeoPoint(currentLocation.latitude, currentLocation.longitude),
+            };
+            await FirebaseFirestore.instance
+                .collection('pickupRequests')
+                .add(pickupRequestData);
+            // Collapse the sliding panel after sending the request
+            _pc.close();
+            // Show a success message or navigate to a confirmation screen
+            print('Pickup request sent successfully!');
+
+            // Find the most relevant buyer
+            await findRelevantBuyer(
+                selectedWaste, _selectedWasteQuantity, currentLocation);
+          }
+        }
       } else {
         // Show message "Please select a waste type" at the bottom of the page
         final snackBarError = SnackBar(
@@ -578,30 +612,43 @@ Future<void> sendPickupRequest() async {
             ),
           ),
           Column(
-            children: [
-              Text(
-                'Waste Type :',
-                style: TextStyle(fontSize: 18),
-              ),
-              SizedBox(
-                width: 12,
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: wasteType.length,
-                itemBuilder: (context, index) {
-                  return CheckboxListTile(
-                      title: Text(wasteType[index]),
-                      value: selectedWaste[index],
-                      onChanged: (value) {
-                        setState(() {
-                          selectedWaste[index] = value!;
-                        });
-                      });
-                },
-              ),
-            ],
-          ),
+  children: [
+    Text(
+      'Waste Type :',
+      style: TextStyle(fontSize: 18),
+    ),
+    SizedBox(
+      height: 12, // Changed from width to height for proper spacing between the text and the list
+    ),
+    ListView.builder(
+      shrinkWrap: true,
+      itemCount: wasteType.length,
+      itemBuilder: (BuildContext context, int index) {
+        return CheckboxListTile(
+          title: Text(wasteType[index]),
+          value: selectedIndex == index, // Check if the current index is the selected one
+          onChanged: (bool? value) {
+            setState(() {
+              if (value != null && value) {
+            // Update the selected index only if the checkbox is checked
+            selectedIndex = index;
+            for (int i = 0; i < selectedWaste.length; i++) {
+              selectedWaste[i] = i == index; // Update the selectedWaste list accordingly
+            }
+          } else {
+            // Uncheck the checkbox when it is already checked
+            selectedIndex = -1;
+            for (int i = 0; i < selectedWaste.length; i++) {
+              selectedWaste[i] = false; // Reset the selectedWaste list
+            }
+          }
+            });
+          },
+        );
+      },
+    ),
+  ],
+),
           SizedBox(height: 10),
           Row(
             children: [
@@ -637,7 +684,7 @@ Future<void> sendPickupRequest() async {
               } else {
                 // Show message "Please select a waste type" at the bottom of the page
                 final snackBarError = SnackBar(
-                  content: Text('Please select at least one waste type'),
+                  content: Text('Please select a waste type'),
                 );
                 ScaffoldMessenger.of(context).showSnackBar(snackBarError);
               }

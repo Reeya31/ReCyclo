@@ -63,15 +63,12 @@ class _AccountSettingState extends State<AccountSetting> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
+Future<void> _pickImage() async {
+  // Replace the image picking logic with setting a default image
+  setState(() {
+    _image = null; // Set _image to null to indicate no custom image
+  });
+}
 
 //Logout conformation
 
@@ -124,23 +121,22 @@ class _AccountSettingState extends State<AccountSetting> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: GestureDetector(
                           onTap: _pickImage,
-                          child: Container(
+                          child: 
+                          Container(
                               height: 80,
                               width: 80,
                               decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  shape: BoxShape.circle,
-                                  image: _image != null
-                                      ? DecorationImage(
-                                          image: FileImage(_image!),
-                                          fit: BoxFit.cover)
-                                      : null),
+                                color: Colors.grey,
+                                shape: BoxShape.circle,
+                              ),
                               child: _image == null
-                                  ? Icon(
-                                      Icons.camera_alt,
-                                      color: Colors.white,
+                                  ? Image.asset(
+                                      'assets/images/person.png', // Replace with your asset path
+                                      fit: BoxFit.cover,
                                     )
-                                  : null),
+                                  : null,
+                            ),
+
                         ),
                       ),
                       const SizedBox(
@@ -167,31 +163,6 @@ class _AccountSettingState extends State<AccountSetting> {
                           ),
                           SizedBox(
                             height: 8,
-                          ),
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => UserProfile()));
-                                },
-                                child: Text(
-                                  "Profile Setting",
-                                  style: TextStyle(
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () {},
-                                child: Icon(
-                                  Icons.arrow_right,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       )

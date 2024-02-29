@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:ReCyclo/constants/themedata.dart';
@@ -13,12 +14,22 @@ import 'package:ReCyclo/screens/basic/welcome.dart';
 import 'package:ReCyclo/services/auth.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
+
+late io.Socket socket;
 Future<void> main() async {
  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // Initialize Socket.IO client
+    socket = io.io('http://192.168.79.178:3000', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+
+    socket.connect();
   runApp(const MyApp());
 }
 
