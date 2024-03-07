@@ -106,16 +106,39 @@ io.on('connection', (socket) => {
         const selectedBuyer = sortedRelevantBuyers[0];
 
         if (selectedBuyer) {
-            console.log('Selected Buyer:', selectedBuyer);
-            // Emit an event to the seller with the selected buyer's information
-            io.to(socket.id).emit('selected_buyer', selectedBuyer);
+          console.log('Selected Buyer:', selectedBuyer);
+          
+          // Emit an event to the selected buyer with the seller's request information
+          io.emit('seller_request', {
+            buyerEmail: selectedBuyer.email,
+            sellerInfo: {
+              sellerName: data.Name,
+              sellerPhoneNumber: data.PhoneNumber,
+              sellerWasteType: data.WasteType,
+              sellerWasteQuantity: data.WasteQuantity,
+              sellerPlaceName: data.PlaceName,
+              sellerLocation: data.location
+            }
+          });
+          console.log("Emitted seller request to:", selectedBuyer.email);
+        
+          // Listen for response from the selected buyer
+          socket.on('buyer_response', (response) => {
+            if (response.accepted) {
+              console.log('Buyer accepted the request:', response);
+              // Handle the case when the buyer accepts the request
+            } else {
+              console.log('Buyer rejected the request:', response);
+              // Handle the case when the buyer rejects the request
+            }
+          });
         } else {
-            console.log('No relevant buyer found');
+          console.log('No relevant buyer found');
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Error handling pickup request:', error);
-    }
-});
+      }
+    });
 
   socket.on('disconnect', () => {
     console.log('User disconnected');

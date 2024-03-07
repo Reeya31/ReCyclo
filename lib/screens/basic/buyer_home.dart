@@ -34,6 +34,13 @@ class _BuyerHomeState extends State<BuyerHome> {
   late FirebaseFirestore firestore;
   bool isOnline = true;
   Marker? sellerMarker = Marker(markerId: const MarkerId('sellerLocation'));
+
+// Function to emit buyer's response to the server
+  void sendBuyerResponse(bool accepted) {
+    socket.emit('buyer_response', {'accepted': accepted});
+  }
+
+
   @override
   void initState() {
     super.initState();
@@ -56,35 +63,42 @@ class _BuyerHomeState extends State<BuyerHome> {
       getCurrentLocationOfUserAndFetchName();
       getCurrentLocation();
     });
-
-    // Listen for the pickup_request event
-    socket.on('pickup_request', (data) {
+     // Listen for the pickup_request event
+    socket.on('seller_request', (data) {
       // Handle the pickup request here
-      // Extract relevant information from the received data
-      String sellerName = data['sellerName'];
-      String sellerPhone = data['sellerPhone'];
-      List<bool> wasteTypes = List<bool>.from(data['wasteTypes']);
-      String wasteQuantity = data['wasteQuantity'];
-      double sellerLatitude = data['laltitude'];
-      double sellerLongitude = data['longitude'];
 
-      // Update the user interface or show a notification
-
-      print('Seller Name: $sellerName');
-      print('Seller Phone: $sellerPhone');
-      print('Waste Types: $wasteTypes');
-      print('Waste Quantity: $wasteQuantity');
-      print('Seller Location: ($sellerLatitude, $sellerLongitude)');
+      // Show dialog to the user
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Seller Request'),
+          content: Text('Do you accept the seller request?'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                sendBuyerResponse(false); // Reject the request
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text('Reject'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                sendBuyerResponse(true); // Accept the request
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text('Accept'),
+            ),
+          ],
+        ),
+      );
     });
   }
-
 
   @override
   void dispose() {
     socket.disconnect();
     super.dispose();
   }
-
 
   void updateStatus() {
     try {
@@ -152,7 +166,6 @@ class _BuyerHomeState extends State<BuyerHome> {
               //return true when click on "Yes"
               child:Text('Yes'),
             ),
-
           ],
         ),
       )??false; //if showDialouge had returned null, then return false
