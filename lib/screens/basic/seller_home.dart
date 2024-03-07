@@ -28,10 +28,10 @@ class _HomeState extends State<Home> {
           itemName: "Plastic Bottle",
           imageUrl: "assets/images/water_bottle.jpg",
           description: "Rs.5 for 1l bottle."),
-      WasteItem(
-          itemName: "Plastic Chair",
-          imageUrl: "assets/images/chair.jpg",
-          description: "Negotiable"),
+      // WasteItem(
+      //     itemName: "Plastic Chair",
+      //     imageUrl: "assets/images/chair.jpg",
+      //     description: "Negotiable"),
       WasteItem(
           itemName: "Plastic Container",
           imageUrl: "assets/images/container.png",
@@ -39,13 +39,13 @@ class _HomeState extends State<Home> {
       WasteItem(
           itemName: "Plastic Pipes",
           imageUrl: "assets/images/plastic_pipe.jpg",
-          description: "Rs.20 per meter"),
+          description: "Rs.20 per meter"),  
     ]),
     WasteItemCategory(categoryName: "Paper", items: [
-      WasteItem(
-          itemName: "Newspaper",
-          imageUrl: "assets/images/newspaper.jpg",
-          description: "Re.1 per page."),
+      // WasteItem(
+      //     itemName: "Newspaper",
+      //     imageUrl: "assets/images/newspaper.jpg",
+      //     description: "Re.1 per page."),
       WasteItem(  
           itemName: "cardboard",
           imageUrl: "assets/images/cardboard.jpg",

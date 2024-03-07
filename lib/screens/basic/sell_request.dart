@@ -301,211 +301,182 @@ class _SellRequestState extends State<SellRequest> {
   bool findingBuyer = false;
 
 // Function to fetch buyer information based on the KNN algorithm
-Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQuantity,
-    LatLng sellerLocation) async {
-  try {
-    setState(() {
-      isLoading = false;
-      showFindingBuyerAnimation = true;
-    });
+// Future<void> findRelevantBuyer(List<bool> sellerWasteTypes, String sellerWasteQuantity,
+//     LatLng sellerLocation) async {
+//   try {
+//     setState(() {
+//       isLoading = false;
+//       showFindingBuyerAnimation = true;
+//     });
 
-    await Future.delayed(Duration(seconds: 5)); // Simulate loading
+//     await Future.delayed(Duration(seconds: 5)); // Simulate loading
 
-    QuerySnapshot buyersSnapshot = await FirebaseFirestore.instance.collection('buyers').get();
+//     QuerySnapshot buyersSnapshot = await FirebaseFirestore.instance.collection('buyers').get();
 
-    String? selectedBuyerFullName;
-    String? selectedBuyerPhone;
-    String? selectedBuyerPlaceName;
-    double? minDistance;
-    LatLng? selectedBuyerLocation;
+//     String? selectedBuyerFullName;
+//     String? selectedBuyerPhone;
+//     String? selectedBuyerPlaceName;
+//     double? minDistance;
+//     LatLng? selectedBuyerLocation;
 
-    for (QueryDocumentSnapshot buyerSnapshot in buyersSnapshot.docs) {
-  Map<String, dynamic> buyerData = buyerSnapshot.data() as Map<String, dynamic>;
+//     for (QueryDocumentSnapshot buyerSnapshot in buyersSnapshot.docs) {
+//   Map<String, dynamic> buyerData = buyerSnapshot.data() as Map<String, dynamic>;
 
-  String buyerFullName = buyerData['fullname'] ?? '';
-  String buyerPhone = buyerData['phone'] ?? '';
-  String buyerPlaceName = buyerData['placeName'] ?? '';
-  List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
-  String buyerWasteQuantity = buyerData['WasteQuantity'] ?? '';
-  GeoPoint buyerLocation = buyerData['location'];
-  double buyerLat = buyerLocation.latitude;
-  double buyerLon = buyerLocation.longitude;
+//   String buyerFullName = buyerData['fullname'] ?? '';
+//   String buyerPhone = buyerData['phone'] ?? '';
+//   String buyerPlaceName = buyerData['placeName'] ?? '';
+//   List<bool> buyerWasteTypes = List<bool>.from(buyerData['WasteType']);
+//   String buyerWasteQuantity = buyerData['WasteQuantity'] ?? '';
+//   GeoPoint buyerLocation = buyerData['location'];
+//   double buyerLat = buyerLocation.latitude;
+//   double buyerLon = buyerLocation.longitude;
 
-  List<String> buyerWasteTypeObjects = buyerWasteTypes
-      .asMap()
-      .entries
-      .where((entry) => entry.value)
-      .map((entry) => wasteType[entry.key])
-      .toList();
+//   List<String> buyerWasteTypeObjects = buyerWasteTypes
+//       .asMap()
+//       .entries
+//       .where((entry) => entry.value)
+//       .map((entry) => wasteType[entry.key])
+//       .toList();
 
-  if (sellerWasteTypes.asMap().entries.any((entry) =>
-      entry.value && buyerWasteTypeObjects.contains(wasteType[entry.key]))) {
-    if (sellerWasteQuantity == buyerWasteQuantity) {
-      double distance = calculateDistance(
-          sellerLocation.latitude, sellerLocation.longitude, buyerLat, buyerLon);
+//   if (sellerWasteTypes.asMap().entries.any((entry) =>
+//       entry.value && buyerWasteTypeObjects.contains(wasteType[entry.key]))) {
+//     if (sellerWasteQuantity == buyerWasteQuantity) {
+//       double distance = calculateDistance(
+//           sellerLocation.latitude, sellerLocation.longitude, buyerLat, buyerLon);
 
-      if (minDistance == null || distance < minDistance) {
-        minDistance = distance;
-        selectedBuyerFullName = buyerFullName;
-        selectedBuyerPhone = buyerPhone;
-        selectedBuyerPlaceName = buyerPlaceName;
-        selectedBuyerLocation = LatLng(buyerLat, buyerLon);
-      }
-    }
-  }
-}
+//       if (minDistance == null || distance < minDistance) {
+//         minDistance = distance;
+//         selectedBuyerFullName = buyerFullName;
+//         selectedBuyerPhone = buyerPhone;
+//         selectedBuyerPlaceName = buyerPlaceName;
+//         selectedBuyerLocation = LatLng(buyerLat, buyerLon);
+//       }
+//     }
+//   }
+// }
 
     
-if (selectedBuyerFullName != null) {
-    setState(() {
-      selectedBuyer = {
-        'name': selectedBuyerFullName,
-        'phone': selectedBuyerPhone,
-        'placeName': selectedBuyerPlaceName,
-        'location': {'latitude': buyerLat, 'longitude': buyerLon}
-      };
-    });
+// if (selectedBuyerFullName != null) {
+//     setState(() {
+//       selectedBuyer = {
+//         'name': selectedBuyerFullName,
+//         'phone': selectedBuyerPhone,
+//         'placeName': selectedBuyerPlaceName,
+//         'location': {'latitude': buyerLat, 'longitude': buyerLon}
+//       };
+//     });
 
-    // Add the buyer's location to the markers
-    setState(() {
-      if (selectedBuyerLocation != null) {
-        markers.add(Marker(
-          markerId: MarkerId('selectedBuyer'),
-          position: selectedBuyerLocation!,
-        ));
-      }
-    });
+//     // Add the buyer's location to the markers
+//     setState(() {
+//       if (selectedBuyerLocation != null) {
+//         markers.add(Marker(
+//           markerId: MarkerId('selectedBuyer'),
+//           position: selectedBuyerLocation!,
+//         ));
+//       }
+//     });
 
-    print('Selected Buyer Full Name: $selectedBuyerFullName');
-    print('Selected Buyer Phone: $selectedBuyerPhone');
-    print('Selected Buyer Place Name: $selectedBuyerPlaceName');
-  } else {
-    // No relevant buyer found
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('No buyers are available.'),
-      ),
-    );
-  }
-}
- catch (e) {
-    print('Error finding relevant buyer: $e');
-  } finally {
-    setState(() {
-      isLoading = false;
-      showFindingBuyerAnimation = false;
-    });
-  }
-}
+//     print('Selected Buyer Full Name: $selectedBuyerFullName');
+//     print('Selected Buyer Phone: $selectedBuyerPhone');
+//     print('Selected Buyer Place Name: $selectedBuyerPlaceName');
+//   } else {
+//     // No relevant buyer found
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text('No buyers are available.'),
+//       ),
+//     );
+//   }
+// }
+//  catch (e) {
+//     print('Error finding relevant buyer: $e');
+//   } finally {
+//     setState(() {
+//       isLoading = false;
+//       showFindingBuyerAnimation = false;
+//     });
+//   }
+// }
 
 
-// Method for calculating distance (Haversine formula)
-double calculateDistance(double startLat, double startLon, double endLat, double endLon) {
-    const double earthRadius = 6371.0; // Earth radius in kilometers
+// // Method for calculating distance (Haversine formula)
+// double calculateDistance(double startLat, double startLon, double endLat, double endLon) {
+//     const double earthRadius = 6371.0; // Earth radius in kilometers
 
-    // Convert degrees to radians
-    double toRadians(double degree) {
-      return degree * (pi / 180.0);
-    }
+//     // Convert degrees to radians
+//     double toRadians(double degree) {
+//       return degree * (pi / 180.0);
+//     }
 
-    // Haversine formula
-    num haversine(double theta) {
-      return pow(sin(theta / 2), 2);
-    }
+//     // Haversine formula
+//     num haversine(double theta) {
+//       return pow(sin(theta / 2), 2);
+//     }
 
-    double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-      double dLat = toRadians(lat2 - lat1);
-      double dLon = toRadians(lon2 - lon1);
+//     double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+//       double dLat = toRadians(lat2 - lat1);
+//       double dLon = toRadians(lon2 - lon1);
 
-      double a = haversine(dLat) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * haversine(dLon);
-      double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+//       double a = haversine(dLat) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * haversine(dLon);
+//       double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
-      return earthRadius * c;
-    }
+//       return earthRadius * c;
+//     }
 
-    return haversineDistance(startLat, startLon, endLat, endLon);
-  }
+//     return haversineDistance(startLat, startLon, endLat, endLon);
+//   }
 
 
 Future<void> sendPickupRequest() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
 
-      if (user != null) {
-        DocumentSnapshot sellerInfo = await FirebaseFirestore.instance
-            .collection('sellers')
-            .doc(user.uid)
-            .get();
+    if (user != null) {
+      DocumentSnapshot sellerInfo = await FirebaseFirestore.instance
+          .collection('sellers')
+          .doc(user.uid)
+          .get();
 
-        // Check if the seller info exists
-        if (sellerInfo.exists) {
-          String sellerFullname = sellerInfo['fullname'];
-          String sellerPhone = sellerInfo['phone'];
+      // Check if the seller info exists
+      if (sellerInfo.exists) {
+        String sellerFullname = sellerInfo['fullname'];
+        String sellerPhone = sellerInfo['phone'];
 
-          List<String> selectedWasteTypes = wasteType
-              .asMap()
-              .entries
-              .where((entry) => selectedWaste[entry.key])
-              .map((entry) => entry.value)
-              .toList();
+        // Construct the pickup request data
+        Map<String, dynamic> pickupRequestData = {
+          'Name': sellerFullname,
+          'PhoneNumber': sellerPhone,
+          'WasteType': selectedWaste.map((waste) => waste.toString()).toList(),
+          'WasteQuantity': _selectedWasteQuantity,
+          'PlaceName': addressController.text,
+          'location': {
+            'latitude': userMarker.position.latitude,
+            'longitude': userMarker.position.longitude,
+          },
+        };
 
-          String wasteQuantity = _selectedWasteQuantity;
+        // Emit the pickup request data to the server
+        socket.emit('pickup_request', pickupRequestData);
 
-          // Get the current location details
-          String placeName = addressController.text;
-          LatLng currentLocation = userMarker.position;
+        // Collapse the sliding panel after sending the request
+        _pc.close();
 
-// Emit a pickup request event to the Socket.IO server
-          socket.emit('pickup_request', {
-            'sellerName': sellerFullname,
-            'sellerPhone': sellerPhone,
-            'wasteTypes': selectedWaste,
-            'wasteQuantity': _selectedWasteQuantity,
-            'laltitude': currentLocation.latitude,
-            'longitude': currentLocation.longitude,
-            // 'location': {
-            //   GeoPoint(currentLocation.latitude, currentLocation.longitude)
-            // },
-          });
-
-// Get the selected waste type and quantity
-
-          if (selectedWasteTypes.isNotEmpty) {
-            // Construct the pickup request data with an array of boolean values for waste types
-            Map<String, dynamic> pickupRequestData = {
-              'Name': sellerFullname,
-              'PhoneNumber': sellerPhone,
-              'WasteType': selectedWaste,
-              'WasteQuantity': wasteQuantity,
-              'PlaceName': placeName,
-              'location':
-                  GeoPoint(currentLocation.latitude, currentLocation.longitude),
-            };
-            await FirebaseFirestore.instance
-                .collection('pickupRequests')
-                .add(pickupRequestData);
-            // Collapse the sliding panel after sending the request
-            _pc.close();
-            // Show a success message or navigate to a confirmation screen
-            print('Pickup request sent successfully!');
-
-            // Find the most relevant buyer
-            await findRelevantBuyer(
-                selectedWaste, _selectedWasteQuantity, currentLocation);
-          }
-        }
-      } else {
-        // Show message "Please select a waste type" at the bottom of the page
-        final snackBarError = SnackBar(
-          content: Text('Please select a waste type'),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBarError);
+        // Show a success message or navigate to a confirmation screen
+        print('Pickup request sent successfully!');
       }
-    } catch (e) {
-      print('Error sending pickup request: $e');
-      // Handle the error (show an error message, etc.)
+    } else {
+      // Show message "Please select a waste type" at the bottom of the page
+      final snackBarError = SnackBar(
+        content: Text('Please select a waste type'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBarError);
     }
+  } catch (e) {
+    print('Error sending pickup request: $e');
+    // Handle the error (show an error message, etc.)
   }
+}
+
 
  // Method to clear buyer information and reset the panel
   void clearBuyerInformation() {

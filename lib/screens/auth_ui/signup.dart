@@ -1,8 +1,11 @@
+import 'dart:io';
+
+import 'package:ReCyclo/screens/auth_ui/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ReCyclo/authentication/auth_service.dart';
-import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class Signup extends StatefulWidget {
   // const Signup({super.key});
@@ -26,9 +29,11 @@ class _SignupState extends State<Signup> {
   List<bool> selectedWaste = [false, false, false, false];
 
 // waste quantity
-  List<String> wasteQty = ['Below 1kg',
-                            '1 to 5 kg',
-                            'Above 5 kg',];
+  List<String> wasteQty = [
+    'Below 1kg',
+    '1 to 5 kg',
+    'Above 5 kg',
+  ];
   List<bool> selectedQty = [false, false, false];
   String initialSelectedQty = "Below 1kg";
 
@@ -76,17 +81,41 @@ class _SignupState extends State<Signup> {
     return true;
   }
 
+  // defining the socket
+  late io.Socket socket;
+
+  @override
+  void initState() {
+    super.initState();
+
+    //initialize socket.io client
+    socket = io.io('http://192.168.98.178:3000', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoconnect': false,
+    });
+
+    socket.connect();
+  }
+
   register() async {
     if (password != null &&
             namecontroller.text != "" &&
             emailcontroller.text != "" &&
             phonecontroller.text != ""
 
-        // ignore: unrelated_type_equality_checks
+        
         ) {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
+
+         // Emit 'register_seller' event to the Socket.IO server
+            socket.emit('register_seller', {
+              'fullname': fullName,
+              'email': email,
+              'phone': phone,
+              'password': password,
+            });
 
         await FirebaseFirestore.instance
             .collection('sellers')
@@ -100,7 +129,7 @@ class _SignupState extends State<Signup> {
           // Add other fields as needed
         });
 
-
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
               "Registered Succesfully!",
@@ -111,6 +140,7 @@ class _SignupState extends State<Signup> {
             ),
             backgroundColor: Color.fromARGB(255, 8, 149, 128)));
 
+        // ignore: use_build_context_synchronously
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => Login()));
       } on FirebaseAuthException catch (e) {
@@ -129,7 +159,6 @@ class _SignupState extends State<Signup> {
 
 //buyer
   register1() async {
-    // ignore: unnecessary_null_comparison
     if (password != null &&
             namecontroller.text != "" &&
             emailcontroller.text != "" &&
@@ -140,6 +169,16 @@ class _SignupState extends State<Signup> {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
+
+        // Emit 'register_buyer' event to the Socket.IO server
+        socket.emit('register_buyer', {
+          'fullname': fullName,
+          'email': email,
+          'phone': phone,
+          'password': password,
+          'selectedWaste': selectedWaste,
+          'initialSelectedQty': initialSelectedQty,
+        });
 
         await FirebaseFirestore.instance
             .collection('buyers')
@@ -154,18 +193,7 @@ class _SignupState extends State<Signup> {
           'WasteQuantity': initialSelectedQty,
           // Add other fields as needed
         });
-        // if (selectedUserType == UserType.Buyer) {
-        //   await FirebaseFirestore.instance
-        //       .collection('buyers')
-        //       .doc(userCredential.user?.uid)
-        //       .set({
-        //     'selectedWaste': selectedWaste,
-        //     'initialSelectedQty': initialSelectedQty,
 
-        //     // Add other buyer-related fields as needed//   });
-
-        //   validateWasteFields();
-        // }
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
@@ -176,15 +204,6 @@ class _SignupState extends State<Signup> {
               ),
             ),
             backgroundColor: Color.fromARGB(255, 8, 149, 128)));
-
-        // await FirebaseFirestore.instance
-        //     .collection('buyers')
-        //     .doc(userCredential.user?.uid)
-        //     .set({
-        //   'selectedWaste': selectedWaste,
-        //   'initialSelectedQty': initialSelectedQty,
-        //   // Add other buyer-related fields as needed
-        // });
 
         // ignore: use_build_context_synchronously
         Navigator.push(
@@ -315,10 +334,7 @@ class _SignupState extends State<Signup> {
                 )),
           ],
         );
-
-
-
-    case UserType.Buyer:
+      case UserType.Buyer:
         return Column(
           children: [
             Padding(
@@ -348,7 +364,8 @@ class _SignupState extends State<Signup> {
                       if (value.contains('@') && value.endsWith('.com')) {
                         return null;
                       }
-                      return 'Enter a valid email address';}
+                      return 'Enter a valid email address';
+                    }
                     return null;
                   },
                   decoration: const InputDecoration(
@@ -544,7 +561,8 @@ class _SignupState extends State<Signup> {
                   ),
                 )
               ]),
-            )),),
+            )),
+      ),
     );
   }
 }
