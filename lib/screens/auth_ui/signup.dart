@@ -1,10 +1,11 @@
-import 'dart:io';
+// import 'dart:io';
 
-import 'package:ReCyclo/screens/auth_ui/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ReCyclo/authentication/auth_service.dart';
+import 'package:ReCyclo/screens/auth_ui/login.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class Signup extends StatefulWidget {
@@ -89,7 +90,7 @@ class _SignupState extends State<Signup> {
     super.initState();
 
     //initialize socket.io client
-    socket = io.io('http://192.168.98.178:3000', <String, dynamic>{
+    socket = io.io('http://192.168.143.25:3000', <String, dynamic>{
       'transports': ['websocket'],
       'autoconnect': false,
     });
@@ -99,23 +100,20 @@ class _SignupState extends State<Signup> {
 
   register() async {
     if (password != null &&
-            namecontroller.text != "" &&
-            emailcontroller.text != "" &&
-            phonecontroller.text != ""
-
-        
-        ) {
+        namecontroller.text != "" &&
+        emailcontroller.text != "" &&
+        phonecontroller.text != "") {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
 
-         // Emit 'register_seller' event to the Socket.IO server
-            socket.emit('register_seller', {
-              'fullname': fullName,
-              'email': email,
-              'phone': phone,
-              'password': password,
-            });
+        // Emit 'register_seller' event to the Socket.IO server
+        socket.emit('register_seller', {
+          'fullname': fullName,
+          'email': email,
+          'phone': phone,
+          'password': password,
+        });
 
         await FirebaseFirestore.instance
             .collection('sellers')
@@ -130,15 +128,22 @@ class _SignupState extends State<Signup> {
         });
 
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-              "Registered Succesfully!",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            backgroundColor: Color.fromARGB(255, 8, 149, 128)));
+        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        //     content: Text(
+        //       "Registered Succesfully!",
+        //       style: TextStyle(
+        //         fontSize: 18,
+        //         fontWeight: FontWeight.w600,
+        //       ),
+        //     ),
+        //     backgroundColor: Color.fromARGB(255, 8, 149, 128)));
+        Fluttertoast.showToast(
+          msg: "You have been successfully registered",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Color.fromARGB(255, 8, 149, 128),
+          textColor: Colors.white,
+        );
 
         // ignore: use_build_context_synchronously
         Navigator.push(
@@ -171,14 +176,21 @@ class _SignupState extends State<Signup> {
             .createUserWithEmailAndPassword(email: email, password: password);
 
         // Emit 'register_buyer' event to the Socket.IO server
-        socket.emit('register_buyer', {
-          'fullname': fullName,
-          'email': email,
-          'phone': phone,
-          'password': password,
-          'selectedWaste': selectedWaste,
-          'initialSelectedQty': initialSelectedQty,
-        });
+        // socket.emit(
+        //   'register_buyer',
+        //   {
+        //     'fullname': fullName,
+        //     'email': email,
+        //     'phone': phone,
+        //     'password': password,
+        //     'selectedWaste': selectedWaste,
+        //     'initialSelectedQty': initialSelectedQty,
+        //   },
+        // );
+
+        // socket.on('register_buyer_callback', (data) {
+        //   print('Socket ID received: ${data['socketId']}');
+        // });
 
         await FirebaseFirestore.instance
             .collection('buyers')
@@ -195,15 +207,22 @@ class _SignupState extends State<Signup> {
         });
 
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-              "Registered Succesfully!",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            backgroundColor: Color.fromARGB(255, 8, 149, 128)));
+        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        //     content: Text(
+        //       "Registered Succesfully!",
+        //       style: TextStyle(
+        //         fontSize: 18,
+        //         fontWeight: FontWeight.w600,
+        //       ),
+        //     ),
+        //     backgroundColor: Color.fromARGB(255, 8, 149, 128)));
+        Fluttertoast.showToast(
+          msg: "You have been successfully registered",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Color.fromARGB(255, 8, 149, 128),
+          textColor: Colors.white,
+        );
 
         // ignore: use_build_context_synchronously
         Navigator.push(
